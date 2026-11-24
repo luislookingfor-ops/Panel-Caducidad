@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel de caducidad · Insumos y equipos de laboratorio</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -35,11 +36,146 @@
 .ms-opt input{cursor:pointer;}
 .ms-empty{padding:8px;font-size:12px;color:var(--ink-faint);}
 .ms-clear{display:block;width:100%;text-align:left;padding:7px 8px;font-size:11px;color:var(--primary);background:none;border:none;border-top:0.5px solid var(--line);margin-top:4px;cursor:pointer;}
+
+/* ===== ESTILOS DEL LOGIN ===== */
+.login-wrapper{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle at 10% 20%, #E2EEEE 0%, #EEF3F3 90%);
+  padding:20px;
+  font-family:'Inter',sans-serif;
+}
+.login-card{
+  width:100%;
+  max-width:420px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:0 16px 40px rgba(19,42,45,0.08);
+  padding:36px 32px;
+}
+.login-header{
+  text-align:center;
+  margin-bottom:26px;
+}
+.login-logo{
+  width:50px;
+  height:50px;
+  border-radius:12px;
+  background:var(--primary);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:14px;
+  box-shadow:0 6px 16px rgba(11,85,99,0.22);
+}
+.login-field{
+  margin-bottom:16px;
+  text-align:left;
+}
+.login-field label{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-soft);
+  margin-bottom:6px;
+}
+.login-field input{
+  width:100%;
+  height:42px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background:var(--surface-soft);
+  padding:0 14px;
+  font-size:13.5px;
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  transition:all 0.2s ease;
+}
+.login-field input:focus{
+  outline:none;
+  border-color:var(--primary);
+  background:#fff;
+  box-shadow:0 0 0 3px var(--primary-soft);
+}
+.login-btn{
+  width:100%;
+  height:42px;
+  border-radius:9px;
+  border:none;
+  background:var(--primary);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background 0.2s ease;
+  font-family:'Inter',sans-serif;
+  margin-top:6px;
+}
+.login-btn:hover{
+  background:var(--primary-dark);
+}
+.login-error{
+  display:none;
+  background:var(--critical-soft);
+  color:var(--critical-text);
+  border:1px solid #F5C6CB;
+  border-radius:8px;
+  padding:10px 12px;
+  font-size:12px;
+  margin-bottom:16px;
+  text-align:center;
+  font-weight:500;
+}
 </style>
 </head>
-<body>
+<body style="margin:0;padding:0;">
 
-<div class="pcz-root">
+<!-- ===== PANTALLA DE LOGIN ===== -->
+<div id="login-view" class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 3l6 0" />
+          <path d="M10 9l4 0" />
+          <path d="M10 3v6l-4 11a.7 .7 0 0 0 .5 1h11a.7 .7 0 0 0 .5 -1l-4 -11v-6" />
+        </svg>
+      </div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--primary-dark);margin:0 0 4px;font-family:'Space Grotesk',sans-serif;">INGELAB</h2>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0;">Control de Caducidad e Inventarios</p>
+    </div>
+
+    <div id="login-error" class="login-error"></div>
+
+    <form id="login-form" autocomplete="on">
+      <div class="login-field">
+        <label for="login-email">Correo Electrónico / Usuario</label>
+        <input type="email" id="login-email" placeholder="Ingresa tu correo o usuario" autocomplete="username" required>
+      </div>
+
+      <div class="login-field">
+        <label for="login-password">Contraseña</label>
+        <input type="password" id="login-password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" id="login-btn" class="login-btn">
+        Iniciar Sesión
+      </button>
+    </form>
+
+    <div style="margin-top:22px;text-align:center;border-top:1px solid var(--line);padding-top:14px;">
+      <span style="font-size:11px;color:var(--ink-faint);display:inline-flex;align-items:center;gap:5px;">
+        🔒 Acceso exclusivo para personal autorizado
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL PRINCIPAL (Requiere autenticación) ===== -->
+<div id="panel-view" class="pcz-root" style="display:none;">
 
   <!-- ===== HEADER ===== -->
   <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
@@ -52,9 +188,18 @@
       </div>
       <p style="font-size:13px;color:var(--ink-soft);margin:0 0 0 44px;">Control de vencimiento, rotación y valor en riesgo · INGELAB S.A.S y JORGE ESTRELLA</p>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <div style="background:var(--primary-soft);border:0.5px solid var(--primary);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--primary-dark);">
         Corte de análisis <span class="pcz-num" id="corte-fecha" style="font-weight:600;">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:0.5px solid var(--line);border-radius:10px;padding:6px 12px;">
+        <span style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--safe);"></span>
+          <strong id="user-display" style="color:var(--ink);">Usuario</strong>
+        </span>
+        <button id="btn-logout" type="button" style="height:26px;padding:0 10px;font-size:11px;background:var(--critical-soft);color:var(--critical-text);border:0.5px solid #F5C6CB;border-radius:6px;cursor:pointer;font-weight:600;">
+          Cerrar sesión
+        </button>
       </div>
     </div>
   </div>
@@ -1000,8 +1145,74 @@
     elBuscar.value=''; render();
   });
 
-  // Arranque: prioriza la API ERP (datos_erp_combinados.json); si falla, usa Google Sheets.
-  loadFromErpApi();
+  // ===== AUTENTICACIÓN / LOGIN =====
+  var ADMIN_USER = 'logistica@ingelabcorp.com';
+  var ADMIN_PASS = 'logisticaingelab2026@';
+
+  var loginView = document.getElementById('login-view');
+  var panelView = document.getElementById('panel-view');
+  var loginForm = document.getElementById('login-form');
+  var loginEmail = document.getElementById('login-email');
+  var loginPassword = document.getElementById('login-password');
+  var loginError = document.getElementById('login-error');
+  var btnLogout = document.getElementById('btn-logout');
+
+  function isAuthenticated(){
+    return sessionStorage.getItem('ingelab_auth_user') === ADMIN_USER || localStorage.getItem('ingelab_auth_user') === ADMIN_USER;
+  }
+
+  function showPanel(){
+    if (loginView) loginView.style.display = 'none';
+    if (panelView) panelView.style.display = 'block';
+    var userDisplay = document.getElementById('user-display');
+    var activeUser = sessionStorage.getItem('ingelab_auth_user') || localStorage.getItem('ingelab_auth_user') || ADMIN_USER;
+    if (userDisplay) userDisplay.textContent = activeUser;
+    if (!ERP_ROWS_CACHE.length) {
+      loadFromErpApi();
+    } else {
+      render();
+    }
+  }
+
+  function showLogin(){
+    if (panelView) panelView.style.display = 'none';
+    if (loginView) loginView.style.display = 'flex';
+    if (loginPassword) loginPassword.value = '';
+    if (loginError) loginError.style.display = 'none';
+  }
+
+  if (loginForm){
+    loginForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var email = loginEmail.value.trim().toLowerCase();
+      var pass = loginPassword.value;
+
+      if (email === ADMIN_USER.toLowerCase() && pass === ADMIN_PASS){
+        sessionStorage.setItem('ingelab_auth_user', ADMIN_USER);
+        loginError.style.display = 'none';
+        showPanel();
+      } else {
+        loginError.style.display = 'block';
+        loginError.textContent = 'Correo electrónico o contraseña incorrectos.';
+        loginPassword.focus();
+      }
+    });
+  }
+
+  if (btnLogout){
+    btnLogout.addEventListener('click', function(){
+      sessionStorage.removeItem('ingelab_auth_user');
+      localStorage.removeItem('ingelab_auth_user');
+      showLogin();
+    });
+  }
+
+  // Arranque: validar sesión previa o mostrar pantalla de login
+  if (isAuthenticated()){
+    showPanel();
+  } else {
+    showLogin();
+  }
 
   if (SHEET_GID_HISTORIAL){
     cargarHistorial();
