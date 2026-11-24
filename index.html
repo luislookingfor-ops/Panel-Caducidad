@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de caducidad · Insumos y equipos de laboratorio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#EEF3F3; --surface:#FFFFFF; --surface-soft:#F5F9F9;
+  --ink:#132A2D; --ink-soft:#587277; --ink-faint:#8AA0A3;
+  --primary:#0B5563; --primary-dark:#083E48; --primary-soft:#DCEEEF;
+  --critical:#C43B45; --critical-soft:#FBE4E5; --critical-text:#8E232B;
+  --warning:#D98F2B; --warning-soft:#FBEDD8; --warning-text:#9C6415;
+  --caution:#3E7FB0; --caution-soft:#E1EDF6; --caution-text:#28587D;
+  --safe:#3F9468; --safe-soft:#E1F0E7; --safe-text:#286B48;
+  --line:#DCE6E7;
+}
+*{box-sizing:border-box;}
+.pcz-root{font-family:'Inter',sans-serif;color:var(--ink);background:var(--bg);padding:28px;border-radius:16px;line-height:1.4;}
+.pcz-root h1,.pcz-root h2,.pcz-root h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-0.01em;}
+.pcz-num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+.pcz-btn{height:34px;border-radius:8px;border:0.5px solid var(--primary);background:var(--primary);color:#fff;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.pcz-btn:hover{background:var(--primary-dark);}
+.pcz-input{height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 12px;font-size:12px;font-family:'IBM Plex Mono',monospace;background:var(--surface-soft);}
+.ms{position:relative;display:inline-block;}
+.ms-btn{height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 12px;font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);background:var(--surface-soft);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.ms-btn:hover{border-color:var(--primary);}
+.ms-btn.has-selection{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-dark);}
+.ms-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:220px;max-height:260px;overflow-y:auto;background:var(--surface);border:0.5px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(19,42,45,0.14);padding:6px;z-index:30;}
+.ms-panel.open{display:block;}
+.ms-opt{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;}
+.ms-opt:hover{background:var(--surface-soft);}
+.ms-opt input{cursor:pointer;}
+.ms-empty{padding:8px;font-size:12px;color:var(--ink-faint);}
+.ms-clear{display:block;width:100%;text-align:left;padding:7px 8px;font-size:11px;color:var(--primary);background:none;border:none;border-top:0.5px solid var(--line);margin-top:4px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="pcz-root">
+
+  <!-- ===== HEADER ===== -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="width:34px;height:34px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-flask" style="color:#fff;font-size:19px;" aria-hidden="true"></i>
+        </div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--primary-dark);">Panel de caducidad · Insumos y equipos de laboratorio</h1>
+      </div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 0 44px;">Control de vencimiento, rotación y valor en riesgo · INGELAB S.A.S y JORGE ESTRELLA</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="background:var(--primary-soft);border:0.5px solid var(--primary);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--primary-dark);">
+        Corte de análisis <span class="pcz-num" id="corte-fecha" style="font-weight:600;">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FUENTE DE DATOS: API ERP ===== -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px;background:#EAF6F7;border:1.5px solid var(--primary);border-radius:12px;padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3F9468;"></span>
+      <strong style="font-size:13px;color:var(--primary-dark);">Conexión API ERP (047 & 079):</strong>
+    </div>
+    <button id="btn-conectar-erp" class="pcz-btn" style="background:var(--primary);display:flex;align-items:center;gap:6px;">
+      ⚡ Cargar desde API ERP
+    </button>
+    <label style="font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px;cursor:pointer;background:#fff;padding:6px 10px;border-radius:8px;border:0.5px solid var(--line);">
+      <input type="checkbox" id="chk-solo-con-venc" checked style="cursor:pointer;">
+      Solo ítems con fecha de caducidad (Lote / Vencimiento)
+    </label>
+    <span style="font-size:11px;color:var(--ink-soft);margin-left:auto;">
+      API Insoft (Bodegas + <b>nroLote</b> + <b>fechaVencimiento</b>) + Catalyst (Costo/Marca + Ventas)
+    </span>
+  </div>
+
+  <details style="margin-bottom:12px;">
+    <summary style="cursor:pointer;font-size:11.5px;color:var(--ink-soft);font-weight:600;padding:4px 2px;">
+      + Conexión de respaldo con Google Sheets (JSONP / CSV)
+    </summary>
+    <!-- ===== FUENTE DE DATOS GOOGLE SHEETS ===== -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:12px 14px;">
+      <i class="ti ti-cloud" style="color:var(--primary);font-size:16px;" aria-hidden="true"></i>
+      <span style="font-size:12px;color:var(--primary-dark);white-space:nowrap;font-weight:600;">Google Sheet (sin proxy):</span>
+      <input id="sheet-id-input" class="pcz-input" type="text" placeholder="Pega la URL de tu Google Sheet o ID" style="flex:1;min-width:220px;">
+      <button id="btn-conectar-jsonp" class="pcz-btn">Conectar</button>
+      <button id="btn-refrescar-jsonp" class="pcz-btn" style="background:var(--surface);color:var(--primary-dark);">Actualizar</button>
+      <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);white-space:nowrap;cursor:pointer;">
+        <input id="chk-auto" type="checkbox" style="cursor:pointer;">
+        Auto-refrescar cada 5 min
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:12px 14px;">
+      <i class="ti ti-cloud" style="color:var(--ink-soft);font-size:16px;" aria-hidden="true"></i>
+      <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;">URL CSV publicada:</span>
+      <input id="sheet-url" class="pcz-input" type="text" placeholder="Pega aquí la URL CSV publicada" style="flex:1;min-width:220px;">
+      <button id="btn-conectar" class="pcz-btn">Conectar</button>
+      <button id="btn-refrescar" class="pcz-btn" style="background:var(--surface);color:var(--primary-dark);">Actualizar</button>
+      <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);white-space:nowrap;cursor:pointer;">
+        <input id="chk-proxy" type="checkbox" style="cursor:pointer;">
+        Usar proxy CORS público
+      </label>
+    </div>
+  </details>
+  <div id="estado-fuente-wrap" style="margin-bottom:20px;">
+    <span id="estado-fuente" style="font-size:11px;color:var(--ink-faint);">Conectando con Google Sheets…</span>
+    <div id="estado-detalle" style="font-size:10.5px;color:var(--critical-text);margin-top:2px;"></div>
+    <div id="estado-proxy-note" style="font-size:10px;color:var(--ink-faint);margin-top:2px;display:none;">
+      El proxy CORS envía tu hoja a través de un servicio de terceros para poder leerla desde el navegador. Se prueban 3 proveedores en cadena (allorigins, corsproxy.io, codetabs) — si uno falla, se intenta el siguiente automáticamente. No es necesario si el panel se sirve desde un dominio propio con CORS habilitado en el origen de datos.
+    </div>
+  </div>
+
+  <!-- ===== FILTROS ===== -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:12px 14px;">
+    <i class="ti ti-filter" style="color:var(--ink-soft);font-size:16px;" aria-hidden="true"></i>
+
+    <div class="ms" id="ms-empresa">
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las empresas</span> ▾</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="ms" id="ms-bodega">
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las bodegas</span> ▾</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="ms" id="ms-marca">
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las marcas</span> ▾</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="ms" id="ms-riesgo">
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los rangos</span> ▾</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="ms" id="ms-mes">
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los meses</span> ▾</button>
+      <div class="ms-panel"></div>
+    </div>
+
+    <input id="f-buscar" type="text" placeholder="Buscar código, descripción o lote" style="flex:1;min-width:180px;height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--surface-soft);">
+    <button id="f-reset" style="height:34px;border-radius:8px;border:0.5px solid var(--line);background:var(--surface);padding:0 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;">Limpiar filtros</button>
+  </div>
+
+  <!-- ===== KPIs ===== -->
+  <div id="kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px;"></div>
+
+  <!-- ===== CHARTS ===== -->
+  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:22px;">
+    <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;">
+      <h3 style="font-size:14px;color:var(--ink);margin-bottom:4px;">Distribución de valor en riesgo por rango de vencimiento</h3>
+      <p style="font-size:11px;color:var(--ink-faint);margin:0 0 10px;">Costo de unidades sin vender agrupado por urgencia</p>
+      <div style="position:relative;height:230px;">
+        <canvas id="chartBandas" role="img" aria-label="Gráfico de barras del valor en riesgo por rango de días para vencer">Valor en riesgo agrupado por rango de días para caducar.</canvas>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;">
+      <h3 style="font-size:14px;color:var(--ink);margin-bottom:4px;">Valor en riesgo por marca</h3>
+      <p style="font-size:11px;color:var(--ink-faint);margin:0 0 10px;">Participación sobre el total filtrado</p>
+      <div id="leyenda-marca" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-size:11px;color:var(--ink-soft);"></div>
+      <div style="position:relative;height:190px;">
+        <canvas id="chartMarca" role="img" aria-label="Gráfico de dona del valor en riesgo por marca">Valor en riesgo distribuido por marca de producto.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROTACION ===== -->
+  <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:22px;">
+    <h3 style="font-size:14px;color:var(--ink);margin-bottom:2px;">Índice de rotación por marca</h3>
+    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Unidades vendidas / gestionadas sobre el stock próximo a vencer</p>
+    <div id="rotacion-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <!-- ===== TABLA ===== -->
+  <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h3 style="font-size:14px;color:var(--ink);">Detalle de productos por caducar</h3>
+      <span id="tabla-count" style="font-size:11px;color:var(--ink-faint);"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1020px;">
+        <thead>
+          <tr style="text-align:left;color:var(--ink-soft);border-bottom:0.5px solid var(--line);">
+            <th style="padding:8px 6px;">Empresa</th>
+            <th style="padding:8px 6px;">Código</th>
+            <th style="padding:8px 6px;">Descripción</th>
+            <th style="padding:8px 6px;">Marca</th>
+            <th style="padding:8px 6px;">Bodega</th>
+            <th style="padding:8px 6px;">Lote (ERP)</th>
+            <th style="padding:8px 6px;">Vence (Caducidad)</th>
+            <th style="padding:8px 6px;width:170px;">Días para caducar</th>
+            <th style="padding:8px 6px;text-align:right;">Costo unit.</th>
+            <th style="padding:8px 6px;text-align:right;">Stock</th>
+            <th style="padding:8px 6px;text-align:right;">Vendido</th>
+            <th style="padding:8px 6px;text-align:right;">Stock actual</th>
+            <th style="padding:8px 6px;text-align:right;">Valor en riesgo</th>
+            <th style="padding:8px 6px;">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+    </div>
+    <p style="font-size:10.5px;color:var(--ink-faint);margin-top:10px;">
+      Columnas esperadas en tu Google Sheet (en cualquier orden): <b>empresa, codigo, descripcion, marca, bodega, lote, vencimiento, costo, stock, vendido</b>, y opcionalmente <b>aumento</b> (entradas o correcciones de stock; se usa para calcular el Stock actual pero no se muestra como columna).
+      Fechas en formato AAAA-MM-DD o DD/MM/AAAA.
+    </p>
+  </div>
+
+  <!-- ===== HISTORICO DE GESTION ===== -->
+  <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;margin-top:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+      <h3 style="font-size:14px;color:var(--ink);">Histórico de gestión</h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button id="btn-hist-refrescar" class="pcz-btn" style="background:var(--surface);color:var(--primary-dark);">Actualizar historial</button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Lee la pestaña "Historial" de tu Google Sheet (solo lectura) — cada fila que hayas guardado ahí manualmente, con la combinación de filtros y fecha que elegiste.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+      <div class="ms" id="ms-hist-grupo">
+        <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los grupos</span> ▾</button>
+        <div class="ms-panel"></div>
+      </div>
+      <select id="hist-metrica" style="height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);background:var(--surface-soft);">
+        <option value="valorRiesgo">Valor en riesgo</option>
+        <option value="pctGestionado">% gestionado</option>
+        <option value="valorRecuperado">Valor recuperado</option>
+      </select>
+      <span id="hist-estado" style="font-size:11px;color:var(--ink-faint);"></span>
+    </div>
+    <div style="position:relative;height:260px;">
+      <canvas id="chartHistorial" role="img" aria-label="Gráfico de evolución del histórico de gestión">Evolución en el tiempo de los cierres guardados en la pestaña Historial.</canvas>
+    </div>
+    <p style="font-size:10.5px;color:var(--ink-faint);margin-top:10px;">
+      Columnas esperadas en la pestaña <b>Historial</b>: <b>fecha, empresa, valorEnRiesgo, pctGestionado, valorRecuperado</b> (una fila por cada combinación de filtros que quieras seguir, cargada a mano). La columna "empresa" puede contener cualquier texto que describa lo que filtraste ese día (ej. "INGELAB S.A.S", "Bodega B1", "INGELAB S.A.S · Crítico").
+    </p>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+(function(){
+
+  // ===== Para conectar de forma permanente: pega tu URL CSV publicada aquí =====
+  var SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQsLLEBsEkcGmJFwVvrPxZRhArRKZveWNS6_bGok1pnrYWkzsz1fE49DAVf6HxOEAwY_Dypp2Z53lT4/pub?gid=0&single=true&output=csv';
+  // ID de hoja (metodo recomendado, sin proxy). Pega aqui el ID de tu Google Sheet real (no el de /pub).
+  var SHEET_ID_JSONP = '1Fo-l_OT2Rn3eWWvLpZD8eejzWbH-73ASKAYmCfzDgTU';
+  var SHEET_GID_JSONP = '0';
+  // GID de la pestaña "Historial" (solo lectura). Pegalo aqui cuando la crees: numero que aparece
+  // en la URL despues de #gid= cuando tienes esa pestaña abierta en Google Sheets.
+  var SHEET_GID_HISTORIAL = '';
+
+  var ZONE = {
+    critical:{label:'Crítico', max:15, color:'#C43B45', soft:'#FBE4E5', text:'#8E232B'},
+    warning:{label:'Alto', max:30, color:'#D98F2B', soft:'#FBEDD8', text:'#9C6415'},
+    caution:{label:'Medio', max:60, color:'#3E7FB0', soft:'#E1EDF6', text:'#28587D'},
+    safe:{label:'Bajo', max:Infinity, color:'#3F9468', soft:'#E1F0E7', text:'#286B48'},
+    sold:{label:'Vendido', color:'#5B6B6E', soft:'#E7ECEC', text:'#3E4A4C'},
+    unknown:{label:'Fecha inválida', color:'#9B5DE5', soft:'#F1E6FB', text:'#6B3FA0'}
+  };
+  var ZONE_ORDER = ['critical','warning','caution','safe'];
+
+  var DATA = [];
+  var chartBandas=null, chartMarca=null;
+  var autoTimer = null;
+  var REQUIRED_FIELDS = ['codigo','desc','vence']; // columnas minimas para considerar el CSV valido
+
+  function fmtMoney(v){ return '$' + v.toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtPct(v){ return v.toFixed(1) + '%'; }
+
+  function normKey(k){
+    return String(k||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  function parseNum(v){
+    if (typeof v === 'number') return v;
+    var n = parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''));
+    return isNaN(n) ? 0 : n;
+  }
+  function parseFecha(v){
+    if (v instanceof Date) return v;
+    var s = String(v||'').trim();
+    if (!s) return new Date(NaN);
+    // ISO: AAAA-MM-DD (con o sin hora)
+    var iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
+    // DD/MM/AAAA o D/M/AAAA (no depende de la config regional del navegador)
+    var slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (slash){
+      var d = +slash[1], m = +slash[2], y = +slash[3];
+      if (y < 100) y += 2000;
+      return new Date(y, m-1, d);
+    }
+    // ultimo recurso (no garantizado, evitar si es posible)
+    return new Date(s);
+  }
+
+  var FIELD_MAP = {
+    'empresa':'empresa', 'codigo':'codigo', 'descripcion':'desc', 'descripcion item':'desc',
+    'marca':'marca', 'bodega':'bodega', 'lote':'lote', 'vencimiento':'vence',
+    'fechavencimiento':'vence', 'costo':'costo', 'costounitario':'costo',
+    'stock':'stock', 'vendido':'vendido', 'aumento':'aumento'
+  };
+
+  function rawFromCsvRow(row){
+    var out = {};
+    Object.keys(row).forEach(function(k){
+      var field = FIELD_MAP[normKey(k)];
+      if (field) out[field] = row[k];
+    });
+    return {
+      empresa: out.empresa || '', codigo: out.codigo || '', desc: out.desc || '',
+      marca: out.marca || '', bodega: out.bodega || '', lote: out.lote || '',
+      vencimiento: out.vence || '', costo: out.costo, stock: out.stock, vendido: out.vendido,
+      aumento: out.aumento
+    };
+  }
+
+  // ===== Extraer datos de una tabla gviz (respuesta JSONP de Google) =====
+  var EPOCH_SHEETS = new Date(1899, 11, 30); // dia 0 del sistema de fechas de Google Sheets/Excel
+
+  function convertirFechaGviz(cellValue, colType){
+    if (cellValue === null || cellValue === undefined || cellValue === '') return '';
+    // caso normal: columna Date/DateTime -> "Date(AAAA,M,D)" o "Date(AAAA,M,D,H,Mi,S)"
+    if (typeof cellValue === 'string'){
+      var m = cellValue.match(/^Date\((\d+),\s*(\d+),\s*(\d+)/);
+      if (m) return new Date(+m[1], +m[2], +m[3]);
+      return cellValue; // texto plano (columna mixta) -> parseFecha() se encarga mas adelante
+    }
+    // caso: la columna quedo tipada como numero de serie (dias desde el 30/12/1899)
+    if (typeof cellValue === 'number' && (colType === 'date' || colType === 'datetime' || colType === 'number')){
+      return new Date(EPOCH_SHEETS.getTime() + cellValue * 86400000);
+    }
+    return cellValue;
+  }
+
+  function rawRowsFromGvizTable(table){
+    var colIndexByField = {};
+    var colTypeByField = {};
+    (table.cols || []).forEach(function(col, i){
+      var field = FIELD_MAP[normKey(col.label || col.id || '')];
+      if (field){ colIndexByField[field] = i; colTypeByField[field] = col.type; }
+    });
+    function getVal(row, field){
+      var idx = colIndexByField[field];
+      if (idx === undefined || !row.c || !row.c[idx]) return '';
+      return row.c[idx].v;
+    }
+    return (table.rows || []).map(function(row){
+      var vence = convertirFechaGviz(getVal(row, 'vence'), colTypeByField['vence']);
+      return {
+        empresa: getVal(row,'empresa') || '', codigo: getVal(row,'codigo') || '', desc: getVal(row,'desc') || '',
+        marca: getVal(row,'marca') || '', bodega: getVal(row,'bodega') || '', lote: getVal(row,'lote') || '',
+        vencimiento: vence, costo: getVal(row,'costo'), stock: getVal(row,'stock'), vendido: getVal(row,'vendido'),
+        aumento: getVal(row,'aumento')
+      };
+    });
+  }
+
+  var FIELD_MAP_HIST = {
+    'fecha':'fecha', 'empresa':'empresa', 'grupo':'empresa',
+    'valorenriesgo':'valorRiesgo', 'valor en riesgo':'valorRiesgo',
+    'pctgestionado':'pctGestionado', 'gestionado':'pctGestionado', 'pct gestionado':'pctGestionado',
+    'valorrecuperado':'valorRecuperado', 'valor recuperado':'valorRecuperado'
+  };
+
+  function historialRowsFromGvizTable(table){
+    var colIndexByField = {}, colTypeByField = {};
+    (table.cols || []).forEach(function(col, i){
+      var field = FIELD_MAP_HIST[normKey(col.label || col.id || '')];
+      if (field){ colIndexByField[field] = i; colTypeByField[field] = col.type; }
+    });
+    function getVal(row, field){
+      var idx = colIndexByField[field];
+      if (idx === undefined || !row.c || !row.c[idx]) return '';
+      return row.c[idx].v;
+    }
+    return (table.rows || []).map(function(row){
+      var fechaRaw = convertirFechaGviz(getVal(row,'fecha'), colTypeByField['fecha']);
+      var fecha = parseFecha(fechaRaw);
+      return {
+        fecha: fecha,
+        empresa: String(getVal(row,'empresa') || '').trim(),
+        valorRiesgo: parseNum(getVal(row,'valorRiesgo')),
+        pctGestionado: parseNum(getVal(row,'pctGestionado')),
+        valorRecuperado: parseNum(getVal(row,'valorRecuperado'))
+      };
+    }).filter(function(r){ return r.empresa && !isNaN(r.fecha.getTime()); });
+  }
+
+  function extraerSheetId(input){
+    var s = String(input||'').trim();
+    var m = s.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : s;
+  }
+  function extraerGid(input){
+    var s = String(input||'').trim();
+    var m = s.match(/[#&]gid=(\d+)/);
+    return m ? m[1] : '0';
+  }
+
+  var jsonpContador = 0;
+  function cargarViaJsonp(sheetId, gid, onSuccess, onFail){
+    var cbName = '__panelCaducidadCB_' + (jsonpContador++);
+    var script = document.createElement('script');
+    var timeoutId;
+    function limpiar(){
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timeoutId);
+    }
+    window[cbName] = function(data){
+      limpiar();
+      try {
+        if (!data || !data.table) throw new Error('Respuesta inesperada de Google (revisa el ID de la hoja)');
+        onSuccess(data.table);
+      } catch(e){ onFail(e); }
+    };
+    script.src = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) +
+      '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&gid=' + encodeURIComponent(gid || '0');
+    script.onerror = function(){ limpiar(); onFail(new Error('No se pudo cargar la hoja (revisa el ID o que tenga acceso "cualquiera con el enlace")')); };
+    timeoutId = setTimeout(function(){ limpiar(); onFail(new Error('Tiempo de espera agotado (10s)')); }, 10000);
+    document.head.appendChild(script);
+  }
+
+  function enrich(rawArray){
+    var hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    document.getElementById('corte-fecha').textContent =
+      String(hoy.getDate()).padStart(2,'0')+'/'+String(hoy.getMonth()+1).padStart(2,'0')+'/'+hoy.getFullYear();
+
+    return rawArray.filter(function(r){ return r.codigo || r.descripcion || r.desc; }).map(function(r){
+      var d = {
+        empresa: r.empresa || 'Sin empresa',
+        codigo: r.codigo || '',
+        desc: r.descripcion || r.desc || '',
+        marca: r.marca || '',
+        bodega: r.bodega || '',
+        nombreBodega: r.nombreBodega || '',
+        lote: r.lote || '',
+        tipoLote: r.tipoLote || '',
+        origenVencimiento: r.origenVencimiento || '',
+        vence: parseFecha(r.vencimiento || r.vence),
+        costo: parseNum(r.costo),
+        stock: parseNum(r.stock),
+        vendido: parseNum(r.vendido),
+        aumento: parseNum(r.aumento) // ajuste interno de stock (entradas/correcciones); no se muestra en el panel
+      };
+      d.dias = Math.round((d.vence - hoy) / 86400000);
+      d.sinVender = d.stock - d.vendido + d.aumento;
+      d.inconsistente = d.sinVender < 0;
+      d.valorRiesgo = +(d.sinVender * d.costo).toFixed(2);
+      d.valorInicial = +(d.stock * d.costo).toFixed(2);
+      d.valorRecuperado = +(d.vendido * d.costo).toFixed(2);
+      d.mesAno = isNaN(d.vence.getTime()) ? '' : (d.vence.getFullYear() + '-' + String(d.vence.getMonth()+1).padStart(2,'0'));
+      if (d.sinVender <= 0){
+        d.zona = 'sold';
+      } else if (isNaN(d.dias)){
+        d.zona = 'unknown';
+      } else {
+        for (var i=0;i<ZONE_ORDER.length;i++){
+          var z = ZONE_ORDER[i];
+          if (d.dias <= ZONE[z].max){ d.zona = z; break; }
+        }
+      }
+      return d;
+    });
+  }
+
+  // ===== Componente de filtro de seleccion multiple =====
+  var MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var openMs = null;
+
+  function MultiSelect(containerId, placeholder, onChangeCb){
+    var root = document.getElementById(containerId);
+    var btn = root.querySelector('.ms-btn');
+    var btnLabel = root.querySelector('.ms-btn-label');
+    var panel = root.querySelector('.ms-panel');
+    var selected = new Set();
+    var notify = onChangeCb || function(){ render(); };
+
+    function updateLabel(){
+      var n = selected.size;
+      btnLabel.textContent = n === 0 ? placeholder : (n === 1 ? Array.from(selected)[0].label : n + ' seleccionados');
+      btn.classList.toggle('has-selection', n > 0);
+    }
+
+    function setOptions(items){
+      // items: [{value, label}]
+      var optsHtml = items.map(function(it){
+        var checked = Array.from(selected).some(function(s){ return s.value === it.value; }) ? 'checked' : '';
+        return '<label class="ms-opt"><input type="checkbox" value="'+it.value+'" '+checked+'> '+it.label+'</label>';
+      }).join('') || '<div class="ms-empty">Sin opciones</div>';
+      panel.innerHTML = optsHtml + (items.length ? '<button type="button" class="ms-clear">Limpiar</button>' : '');
+
+      // conservar solo selecciones que sigan existiendo en las opciones actuales
+      var validValues = items.map(function(it){ return it.value; });
+      Array.from(selected).forEach(function(s){ if (validValues.indexOf(s.value) === -1) selected.delete(s); });
+
+      panel.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+        cb.addEventListener('change', function(){
+          var item = items.filter(function(it){ return it.value === cb.value; })[0];
+          if (cb.checked) selected.add(item);
+          else { Array.from(selected).forEach(function(s){ if (s.value === cb.value) selected.delete(s); }); }
+          updateLabel();
+          notify();
+        });
+      });
+      var clearBtn = panel.querySelector('.ms-clear');
+      if (clearBtn){
+        clearBtn.addEventListener('click', function(){
+          selected.clear();
+          panel.querySelectorAll('input[type=checkbox]').forEach(function(cb){ cb.checked = false; });
+          updateLabel();
+          notify();
+        });
+      }
+    }
+
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (openMs && openMs !== panel) openMs.classList.remove('open');
+      panel.classList.toggle('open');
+      openMs = panel.classList.contains('open') ? panel : null;
+    });
+    panel.addEventListener('click', function(e){ e.stopPropagation(); });
+
+    updateLabel();
+    return {
+      setOptions: setOptions,
+      getSelectedValues: function(){ return Array.from(selected).map(function(s){ return s.value; }); },
+      clear: function(){ selected.clear(); updateLabel(); panel.querySelectorAll('input[type=checkbox]').forEach(function(cb){ cb.checked = false; }); }
+    };
+  }
+
+  document.addEventListener('click', function(){
+    if (openMs){ openMs.classList.remove('open'); openMs = null; }
+  });
+
+  var msEmpresa = MultiSelect('ms-empresa', 'Todas las empresas');
+  var msBodega = MultiSelect('ms-bodega', 'Todas las bodegas');
+  var msMarca = MultiSelect('ms-marca', 'Todas las marcas');
+  var msRiesgo = MultiSelect('ms-riesgo', 'Todos los rangos');
+  var msMes = MultiSelect('ms-mes', 'Todos los meses');
+
+  msRiesgo.setOptions(ZONE_ORDER.concat(['sold','unknown']).map(function(z){ return { value: z, label: ZONE[z].label }; }));
+
+  function refreshFilterOptions(){
+    var empresas = Array.from(new Set(DATA.map(function(d){return d.empresa;}))).sort();
+    var bodegas = Array.from(new Set(DATA.map(function(d){return d.bodega;}))).sort();
+    var marcas = Array.from(new Set(DATA.map(function(d){return d.marca;}))).sort();
+    var meses = Array.from(new Set(DATA.map(function(d){return d.mesAno;}).filter(Boolean))).sort();
+
+    msEmpresa.setOptions(empresas.map(function(v){ return {value:v, label:v}; }));
+    msBodega.setOptions(bodegas.map(function(v){ return {value:v, label:v}; }));
+    msMarca.setOptions(marcas.map(function(v){ return {value:v, label:v}; }));
+    msMes.setOptions(meses.map(function(v){
+      var parts = v.split('-'); var mesNombre = MESES_ES[parseInt(parts[1],10)-1];
+      return { value:v, label: mesNombre + ' ' + parts[0] };
+    }));
+  }
+
+  var elBuscar = document.getElementById('f-buscar');
+  var elSheetUrl = document.getElementById('sheet-url');
+  var elSheetIdInput = document.getElementById('sheet-id-input');
+  var elEstado = document.getElementById('estado-fuente');
+  var elEstadoDetalle = document.getElementById('estado-detalle');
+  var elProxyNote = document.getElementById('estado-proxy-note');
+  var btnConectar = document.getElementById('btn-conectar');
+  var btnRefrescar = document.getElementById('btn-refrescar');
+  var btnConectarJsonp = document.getElementById('btn-conectar-jsonp');
+  var btnRefrescarJsonp = document.getElementById('btn-refrescar-jsonp');
+  var btnConectarErp = document.getElementById('btn-conectar-erp');
+  var chkSoloConVenc = document.getElementById('chk-solo-con-venc');
+  var chkAuto = document.getElementById('chk-auto');
+  var chkProxy = document.getElementById('chk-proxy');
+  var PROXIES = [
+    { name:'allorigins', build:function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); } },
+    { name:'corsproxy.io', build:function(u){ return 'https://corsproxy.io/?url=' + encodeURIComponent(u); } },
+    { name:'codetabs', build:function(u){ return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); } }
+  ];
+
+  // ===== Historico de gestion (solo lectura) =====
+  var HISTORIAL = [];
+  var chartHistorial = null;
+  var msHistGrupo = MultiSelect('ms-hist-grupo', 'Todos los grupos', function(){ renderHistorial(); });
+  var elHistMetrica = document.getElementById('hist-metrica');
+  var elHistEstado = document.getElementById('hist-estado');
+  var btnHistRefrescar = document.getElementById('btn-hist-refrescar');
+
+  function cargarHistorial(){
+    if (!SHEET_ID_JSONP && !elSheetIdInput.value.trim()){
+      elHistEstado.textContent = 'Configura primero la conexión principal (arriba) con el ID de tu hoja.';
+      elHistEstado.style.color = 'var(--ink-faint)';
+      return;
+    }
+    if (!SHEET_GID_HISTORIAL){
+      elHistEstado.textContent = 'Falta configurar el GID de la pestaña "Historial" en el código (SHEET_GID_HISTORIAL).';
+      elHistEstado.style.color = 'var(--critical-text)';
+      return;
+    }
+    var sheetId = extraerSheetId(elSheetIdInput.value.trim() || SHEET_ID_JSONP);
+    elHistEstado.textContent = 'Cargando historial…';
+    elHistEstado.style.color = 'var(--ink-faint)';
+    cargarViaJsonp(sheetId, SHEET_GID_HISTORIAL, function(table){
+      HISTORIAL = historialRowsFromGvizTable(table).sort(function(a,b){ return a.fecha - b.fecha; });
+      var grupos = Array.from(new Set(HISTORIAL.map(function(r){ return r.empresa; }))).sort();
+      msHistGrupo.setOptions(grupos.map(function(g){ return {value:g, label:g}; }));
+      elHistEstado.textContent = HISTORIAL.length + ' registro(s) cargados · última actualización: ' + horaActual();
+      elHistEstado.style.color = 'var(--safe-text)';
+      renderHistorial();
+    }, function(err){
+      elHistEstado.textContent = 'No se pudo cargar el historial: ' + err.message;
+      elHistEstado.style.color = 'var(--critical-text)';
+    });
+  }
+
+  function renderHistorial(){
+    var metrica = elHistMetrica.value;
+    var gruposSel = msHistGrupo.getSelectedValues();
+    var filas = gruposSel.length ? HISTORIAL.filter(function(r){ return gruposSel.indexOf(r.empresa)!==-1; }) : HISTORIAL;
+
+    var fechasUnicas = Array.from(new Set(filas.map(function(r){ return r.fecha.getTime(); }))).sort(function(a,b){return a-b;});
+    var labels = fechasUnicas.map(function(t){
+      var d = new Date(t);
+      return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+    });
+
+    var grupos = Array.from(new Set(filas.map(function(r){ return r.empresa; }))).sort();
+    var palette = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'];
+    var datasets = grupos.map(function(g, i){
+      var porFecha = {};
+      filas.filter(function(r){ return r.empresa===g; }).forEach(function(r){ porFecha[r.fecha.getTime()] = r[metrica]; });
+      return {
+        label: g,
+        data: fechasUnicas.map(function(t){ return porFecha.hasOwnProperty(t) ? porFecha[t] : null; }),
+        spanGaps: true,
+        borderColor: palette[i % palette.length],
+        backgroundColor: palette[i % palette.length],
+        tension: 0.25
+      };
+    });
+
+    var metricaFmt = metrica === 'pctGestionado' ? fmtPct : fmtMoney;
+
+    if (chartHistorial) chartHistorial.destroy();
+    chartHistorial = new Chart(document.getElementById('chartHistorial'), {
+      type:'line',
+      data:{ labels:labels, datasets:datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:10, font:{size:11}}},
+          tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+metricaFmt(ctx.raw); } } } },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:function(v){ return metrica==='pctGestionado' ? v+'%' : '$'+v; } } } }
+      }
+    });
+  }
+
+  btnHistRefrescar.addEventListener('click', cargarHistorial);
+  elHistMetrica.addEventListener('change', renderHistorial);
+
+  function currentData(){
+    var eSel = msEmpresa.getSelectedValues(), bSel = msBodega.getSelectedValues(),
+        mSel = msMarca.getSelectedValues(), rSel = msRiesgo.getSelectedValues(),
+        mesSel = msMes.getSelectedValues(), q = elBuscar.value.trim().toLowerCase();
+    return DATA.filter(function(d){
+      if (eSel.length && eSel.indexOf(d.empresa)===-1) return false;
+      if (bSel.length && bSel.indexOf(d.bodega)===-1) return false;
+      if (mSel.length && mSel.indexOf(d.marca)===-1) return false;
+      if (rSel.length && rSel.indexOf(d.zona)===-1) return false;
+      if (mesSel.length && mesSel.indexOf(d.mesAno)===-1) return false;
+      if (q && (d.codigo+' '+d.desc+' '+d.lote).toLowerCase().indexOf(q)===-1) return false;
+      return true;
+    });
+  }
+
+  function render(){
+    var rows = currentData();
+
+    var valorRiesgo = rows.reduce(function(s,d){return s+d.valorRiesgo;},0);
+    var valorInicial = rows.reduce(function(s,d){return s+d.valorInicial;},0);
+    var stockTotal = rows.reduce(function(s,d){return s+d.stock;},0);
+    var stockActualTotal = rows.reduce(function(s,d){return s+d.sinVender;},0);
+    var vendidoTotal = rows.reduce(function(s,d){return s+d.vendido;},0);
+    var valorRecuperado = rows.reduce(function(s,d){return s+d.valorRecuperado;},0);
+    var pctGestionado = stockTotal ? (vendidoTotal/stockTotal*100) : 0;
+    var criticos = rows.filter(function(d){return d.zona==='critical';}).length;
+
+    var kpis = [
+      {label:'Valor en riesgo', value: fmtMoney(valorRiesgo), sub:'costo de unidades sin vender', color:'var(--primary-dark)'},
+      {label:'% gestionado', value: fmtPct(pctGestionado), sub: vendidoTotal+' de '+stockTotal+' unidades', color:'var(--safe-text)'},
+      {label:'Valor recuperado', value: fmtMoney(valorRecuperado), sub:'sobre '+fmtMoney(valorInicial)+' inicial', color:'var(--ink)'},
+      {label:'Stock actual total', value: stockActualTotal.toLocaleString('es-EC'), sub:'unidades sin vender (stock − vendido)', color:'var(--caution-text)'},
+      {label:'Ítems críticos', value: criticos, sub:'≤ 15 días para vencer', color:'var(--critical-text)'},
+      {label:'SKUs monitoreados', value: rows.length, sub:'lotes activos en el corte', color:'var(--ink)'}
+    ];
+    document.getElementById('kpi-row').innerHTML = kpis.map(function(k){
+      return '<div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:14px 16px;">'
+        + '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px;">'+k.label+'</div>'
+        + '<div class="pcz-num" style="font-size:22px;font-weight:600;color:'+k.color+';">'+k.value+'</div>'
+        + '<div style="font-size:11px;color:var(--ink-faint);margin-top:2px;">'+k.sub+'</div>'
+        + '</div>';
+    }).join('');
+
+    var bandCounts = {critical:0, warning:0, caution:0, safe:0};
+    var bandValues = {critical:0, warning:0, caution:0, safe:0};
+    rows.forEach(function(d){ bandCounts[d.zona]++; bandValues[d.zona]+=d.valorRiesgo; });
+    var bandLabels = ZONE_ORDER.map(function(z){return ZONE[z].label+' ('+bandCounts[z]+')';});
+    var bandData = ZONE_ORDER.map(function(z){return +bandValues[z].toFixed(2);});
+    var bandColors = ZONE_ORDER.map(function(z){return ZONE[z].color;});
+
+    if (chartBandas) chartBandas.destroy();
+    chartBandas = new Chart(document.getElementById('chartBandas'), {
+      type:'bar',
+      data:{ labels:bandLabels, datasets:[{ label:'Valor en riesgo', data:bandData, backgroundColor:bandColors, borderRadius:4, maxBarThickness:56 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(ctx){ return fmtMoney(ctx.raw); } } } },
+        scales:{ y:{ beginAtZero:true, grid:{color:'#E1E0D9'}, ticks:{ callback:function(v){ return '$'+v; } } }, x:{ grid:{display:false} } }
+      }
+    });
+
+    var byMarca = {};
+    rows.forEach(function(d){ byMarca[d.marca] = (byMarca[d.marca]||0) + d.valorRiesgo; });
+    var marcaLabels = Object.keys(byMarca);
+    var marcaData = marcaLabels.map(function(m){ return +byMarca[m].toFixed(2); });
+    var palette = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'];
+    var marcaColors = marcaLabels.map(function(_,i){ return palette[i % palette.length]; });
+    var totalMarca = marcaData.reduce(function(a,b){return a+b;},0) || 1;
+
+    if (chartMarca) chartMarca.destroy();
+    chartMarca = new Chart(document.getElementById('chartMarca'), {
+      type:'doughnut',
+      data:{ labels:marcaLabels, datasets:[{ data:marcaData, backgroundColor:marcaColors, borderColor:'#FFFFFF', borderWidth:2 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(ctx){ return ctx.label+': '+fmtMoney(ctx.raw); } } } }
+      }
+    });
+    document.getElementById('leyenda-marca').innerHTML = marcaLabels.map(function(m,i){
+      var pct = (marcaData[i]/totalMarca*100).toFixed(0);
+      return '<span style="display:flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;border-radius:2px;background:'+marcaColors[i]+';display:inline-block;"></span>'+m+' '+pct+'%</span>';
+    }).join('');
+
+    var rotByMarca = {};
+    rows.forEach(function(d){
+      if (!rotByMarca[d.marca]) rotByMarca[d.marca] = {stock:0, vendido:0};
+      rotByMarca[d.marca].stock += d.stock;
+      rotByMarca[d.marca].vendido += d.vendido;
+    });
+    var rotKeys = Object.keys(rotByMarca).sort();
+    document.getElementById('rotacion-list').innerHTML = rotKeys.map(function(m){
+      var r = rotByMarca[m];
+      var pct = r.stock ? (r.vendido/r.stock*100) : 0;
+      var barColor = pct>=50 ? 'var(--safe)' : pct>=20 ? 'var(--warning)' : 'var(--critical)';
+      return '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<span style="width:100px;font-size:12px;color:var(--ink);">'+m+'</span>'
+        + '<div style="flex:1;height:8px;background:var(--surface-soft);border-radius:4px;overflow:hidden;">'
+        + '<div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+barColor+';"></div></div>'
+        + '<span class="pcz-num" style="width:80px;text-align:right;font-size:12px;color:var(--ink-soft);">'+r.vendido+'/'+r.stock+' · '+pct.toFixed(0)+'%</span>'
+        + '</div>';
+    }).join('') || '<span style="font-size:12px;color:var(--ink-faint);">Sin datos para el filtro actual.</span>';
+
+    var sorted = rows.slice().sort(function(a,b){ return a.dias - b.dias; });
+    document.getElementById('tabla-count').textContent = sorted.length + ' de ' + DATA.length + ' lotes';
+    document.getElementById('tabla-body').innerHTML = sorted.map(function(d){
+      var z = ZONE[d.zona];
+      var diasValido = !isNaN(d.dias);
+      var pctBar = diasValido ? Math.min(Math.max(d.dias,0)/90*100, 100) : 0;
+      var diasLabel = diasValido ? (d.dias + 'd') : '—';
+      var vFecha = d.vence;
+      var fechaStr = isNaN(vFecha.getTime())
+        ? '—'
+        : String(vFecha.getDate()).padStart(2,'0')+'/'+String(vFecha.getMonth()+1).padStart(2,'0')+'/'+vFecha.getFullYear();
+      var empColor = d.empresa==='INGELAB S.A.S' ? 'var(--primary)' : '#7A4FB0';
+      var empSoft = d.empresa==='INGELAB S.A.S' ? 'var(--primary-soft)' : '#EEE5F7';
+      return '<tr style="border-bottom:0.5px solid var(--line);">'
+        + '<td style="padding:8px 6px;"><span style="background:'+empSoft+';color:'+empColor+';font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;">'+d.empresa+'</span></td>'
+        + '<td class="pcz-num" style="padding:8px 6px;color:var(--ink);">'+d.codigo+'</td>'
+        + '<td style="padding:8px 6px;max-width:220px;">'+d.desc+'</td>'
+        + '<td style="padding:8px 6px;">'+d.marca+'</td>'
+        + '<td style="padding:8px 6px;" title="'+(d.nombreBodega || d.bodega)+'"><span class="pcz-num" style="font-weight:600;color:var(--primary-dark);">'+d.bodega+'</span>'+(d.nombreBodega ? ' <span style="font-size:10.5px;color:var(--ink-soft);">('+d.nombreBodega+')</span>' : '')+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;color:var(--ink);" title="'+(d.tipoLote==='LOTE'?'Lote ERP':(d.tipoLote==='REG_SANITARIO'?'Registro Sanitario':''))+'">'+d.lote+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;" title="'+(d.origenVencimiento || '')+'">'+fechaStr+'</td>'
+        + '<td style="padding:8px 6px;">'
+            + '<div style="display:flex;align-items:center;gap:6px;">'
+            + '<div style="flex:1;height:6px;border-radius:3px;background:var(--surface-soft);overflow:hidden;">'
+            + '<div style="width:'+pctBar+'%;height:100%;background:'+z.color+';"></div></div>'
+            + '<span class="pcz-num" style="font-size:11px;color:var(--ink-soft);width:34px;text-align:right;">'+diasLabel+'</span>'
+            + '</div></td>'
+        + '<td class="pcz-num" style="padding:8px 6px;text-align:right;">'+fmtMoney(d.costo)+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;text-align:right;">'+d.stock+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;text-align:right;">'+d.vendido+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;text-align:right;font-weight:600;'+(d.inconsistente?'color:var(--critical);':'')+'">'+d.sinVender+'</td>'
+        + '<td class="pcz-num" style="padding:8px 6px;text-align:right;font-weight:600;">'+fmtMoney(d.valorRiesgo)+'</td>'
+        + '<td style="padding:8px 6px;"><span style="background:'+z.soft+';color:'+z.text+';font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;">'+z.label+'</span>'
+            + (d.inconsistente ? ' <span title="Vendido supera al stock registrado" style="color:var(--critical);font-size:10.5px;font-weight:700;">⚠ inventario</span>' : '')
+            + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function setData(rawArray){
+    DATA = enrich(rawArray);
+    refreshFilterOptions();
+    render();
+  }
+
+  function horaActual(){
+    var a = new Date();
+    return String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0')+':'+String(a.getSeconds()).padStart(2,'0');
+  }
+
+  function mostrarError(mensaje, detalleTecnico, sugerirProxy){
+    elEstado.textContent = 'No se pudo conectar a Google Sheets';
+    elEstado.style.color = 'var(--critical-text)';
+    elEstadoDetalle.textContent = (mensaje || '') + (detalleTecnico ? ' — Detalle técnico: ' + detalleTecnico : '');
+    elProxyNote.style.display = sugerirProxy ? 'block' : 'none';
+    if (sugerirProxy && !chkProxy.checked){
+      elEstadoDetalle.textContent += ' Google no habilita el acceso directo desde el navegador para este tipo de enlace (falta la cabecera CORS en su respuesta). Activa la casilla "Usar proxy CORS público" de arriba y presiona Actualizar para intentar cargarlo a través de un intermediario.';
+    }
+  }
+
+  function intentarConProxies(url, candidatos, index, onSuccess, onFail){
+    if (index >= candidatos.length){
+      onFail(new Error('Los ' + candidatos.length + ' proxies disponibles fallaron'));
+      return;
+    }
+    var candidato = candidatos[index];
+    fetch(candidato.url, {cache:'no-store'})
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text){ onSuccess(text, candidato.name); })
+      .catch(function(){ intentarConProxies(url, candidatos, index + 1, onSuccess, onFail); });
+  }
+
+  function aplicarRawRows(rawRows, origenLabel){
+    if (!rawRows.length){
+      mostrarError('La hoja no contiene filas de datos (solo encabezados, o los encabezados no coinciden).', null, false);
+      return;
+    }
+    setData(rawRows);
+    var inconsistencias = DATA.filter(function(d){ return d.inconsistente; }).length;
+    var fechasInvalidas = DATA.filter(function(d){ return d.zona === 'unknown'; }).length;
+    elEstado.style.color = 'var(--safe-text)';
+    elEstado.innerHTML = '<b>Conectado</b>' + (origenLabel ? ' (' + origenLabel + ')' : '') + ' · ' + rawRows.length + ' registros · Última actualización: ' + horaActual();
+    var avisos = [];
+    if (inconsistencias) avisos.push('⚠ ' + inconsistencias + ' lote(s) con inconsistencia de inventario (vendido mayor al stock registrado)');
+    if (fechasInvalidas) avisos.push('⚠ ' + fechasInvalidas + ' lote(s) con fecha de vencimiento no reconocida (filtro "Fecha inválida") — revisa que esa celda tenga una fecha real, no texto como "0"');
+    elEstadoDetalle.style.color = avisos.length ? 'var(--critical-text)' : 'var(--ink-faint)';
+    elEstadoDetalle.textContent = avisos.join(' · ');
+  }
+
+
+  function loadFromSheet(url){
+    if (!url){
+      elEstado.textContent = 'Pega una URL CSV de Google Sheets y presiona Conectar';
+      elEstado.style.color = 'var(--ink-faint)';
+      elEstadoDetalle.textContent = '';
+      elProxyNote.style.display = 'none';
+      return;
+    }
+    elEstado.textContent = 'Conectando con Google Sheets…';
+    elEstado.style.color = 'var(--ink-faint)';
+    elEstadoDetalle.textContent = '';
+    elProxyNote.style.display = 'none';
+
+    var candidatos = chkProxy.checked
+      ? PROXIES.map(function(p){ return { url: p.build(url), name: p.name }; })
+      : [{ url: url, name: null }];
+
+    intentarConProxies(url, candidatos, 0, function(csvText, proxyUsado){
+        if (!csvText || !csvText.trim()){
+          mostrarError('El CSV está vacío.', null, false);
+          return;
+        }
+        var parsed = Papa.parse(csvText.trim(), { header:true, skipEmptyLines:true, transformHeader:function(h){ return h.trim(); } });
+        if (parsed.errors && parsed.errors.length){
+          console.warn('Avisos de PapaParse:', parsed.errors);
+        }
+        var fieldsPresent = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields.map(normKey) : [];
+        var mappedFields = fieldsPresent.map(function(f){ return FIELD_MAP[f]; }).filter(Boolean);
+        var faltantes = REQUIRED_FIELDS.filter(function(f){ return mappedFields.indexOf(f) === -1; });
+        if (faltantes.length){
+          mostrarError('El CSV tiene encabezados incorrectos o incompletos. Se esperaban las columnas: empresa, codigo, descripcion, marca, bodega, lote, vencimiento, costo, stock, vendido.', null, false);
+          return;
+        }
+
+        var rawRows = parsed.data.map(rawFromCsvRow).filter(function(r){ return r.codigo || r.desc; });
+        aplicarRawRows(rawRows, proxyUsado ? 'vía proxy ' + proxyUsado : null);
+      },
+      function(err){
+        var esPosibleCors = !chkProxy.checked;
+        mostrarError('No se pudo leer la respuesta del CSV.', err.message, esPosibleCors);
+      }
+    );
+  }
+
+  function loadFromSheetJsonp(input, gidOverride){
+    if (!input){
+      elEstado.textContent = 'Pega la URL o el ID de tu Google Sheet y presiona Conectar';
+      elEstado.style.color = 'var(--ink-faint)';
+      elEstadoDetalle.textContent = '';
+      elProxyNote.style.display = 'none';
+      return;
+    }
+    var sheetId = extraerSheetId(input);
+    var gid = gidOverride || extraerGid(input);
+    elEstado.textContent = 'Conectando con Google Sheets (sin proxy)…';
+    elEstado.style.color = 'var(--ink-faint)';
+    elEstadoDetalle.textContent = '';
+    elProxyNote.style.display = 'none';
+
+    cargarViaJsonp(sheetId, gid, function(table){
+      var rawRows = rawRowsFromGvizTable(table);
+      var camposDetectados = (table.cols||[]).map(function(c){ return normKey(c.label||c.id||''); });
+      var mappedFields = camposDetectados.map(function(f){ return FIELD_MAP[f]; }).filter(Boolean);
+      var faltantes = REQUIRED_FIELDS.filter(function(f){ return mappedFields.indexOf(f) === -1; });
+      if (faltantes.length){
+        mostrarError('La hoja tiene encabezados incorrectos o incompletos. Se esperaban las columnas: empresa, codigo, descripcion, marca, bodega, lote, vencimiento, costo, stock, vendido.', null, false);
+        return;
+      }
+      aplicarRawRows(rawRows.filter(function(r){ return r.codigo || r.desc; }), 'directo, sin proxy');
+    }, function(err){
+      mostrarError('No se pudo conectar con este método. Revisa que el ID sea correcto y que la hoja tenga acceso "Cualquiera con el enlace puede ver".', err.message, false);
+    });
+  }
+
+  var ERP_ROWS_CACHE = [];
+
+  function filtrarYAplicarErp(){
+    if (!ERP_ROWS_CACHE.length) return;
+    var soloConVenc = chkSoloConVenc && chkSoloConVenc.checked;
+    var filas = soloConVenc
+      ? ERP_ROWS_CACHE.filter(function(r){ return r.vencimiento && String(r.vencimiento).trim() !== ''; })
+      : ERP_ROWS_CACHE;
+    aplicarRawRows(filas, 'API ERP 047 & 079 · Catalyst + Insoft');
+  }
+
+  function loadFromErpApi(){
+    elEstado.textContent = 'Cargando datos desde la API ERP combinada (047 & 079)…';
+    elEstado.style.color = 'var(--primary)';
+    elEstadoDetalle.textContent = '';
+    elProxyNote.style.display = 'none';
+
+    var dataEndpoint = (window.location.hostname !== 'localhost' && window.location.protocol !== 'file:')
+      ? '/api/datos?v=' + Date.now()
+      : 'datos_erp_combinados.json?v=' + Date.now();
+
+    fetch(dataEndpoint)
+      .then(function(res){
+        if (!res.ok) {
+          if (dataEndpoint.indexOf('/api/datos') !== -1) {
+            return fetch('datos_erp_combinados.json?v=' + Date.now()).then(function(r){ return r.json(); });
+          }
+          throw new Error('HTTP ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function(data){
+        ERP_ROWS_CACHE = data;
+        filtrarYAplicarErp();
+      })
+      .catch(function(err){
+        console.warn('No se pudo cargar datos_erp_combinados.json, usando respaldo de Google Sheets:', err);
+        if (SHEET_ID_JSONP){
+          loadFromSheetJsonp(SHEET_ID_JSONP, SHEET_GID_JSONP);
+        } else if (SHEET_CSV_URL){
+          loadFromSheet(SHEET_CSV_URL);
+        }
+      });
+  }
+
+  if (btnConectarErp) btnConectarErp.addEventListener('click', loadFromErpApi);
+  if (chkSoloConVenc) chkSoloConVenc.addEventListener('change', filtrarYAplicarErp);
+
+  btnConectar.addEventListener('click', function(){ loadFromSheet(elSheetUrl.value.trim()); });
+  btnRefrescar.addEventListener('click', function(){ loadFromSheet(elSheetUrl.value.trim()); });
+  btnConectarJsonp.addEventListener('click', function(){ loadFromSheetJsonp(elSheetIdInput.value.trim()); });
+  btnRefrescarJsonp.addEventListener('click', function(){ loadFromSheetJsonp(elSheetIdInput.value.trim()); });
+
+  chkAuto.addEventListener('change', function(){
+    if (chkAuto.checked){
+      autoTimer = setInterval(function(){
+        if (ERP_ROWS_CACHE.length) loadFromErpApi();
+        else if (elSheetIdInput.value.trim()) loadFromSheetJsonp(elSheetIdInput.value.trim());
+        else loadFromSheet(elSheetUrl.value.trim());
+      }, 5 * 60 * 1000);
+    } else if (autoTimer){
+      clearInterval(autoTimer);
+      autoTimer = null;
+    }
+  });
+
+  elBuscar.addEventListener('input', render);
+  document.getElementById('f-reset').addEventListener('click', function(){
+    msEmpresa.clear(); msBodega.clear(); msMarca.clear(); msRiesgo.clear(); msMes.clear();
+    elBuscar.value=''; render();
+  });
+
+  // Arranque: prioriza la API ERP (datos_erp_combinados.json); si falla, usa Google Sheets.
+  loadFromErpApi();
+
+  if (SHEET_GID_HISTORIAL){
+    cargarHistorial();
+  } else {
+    elHistEstado.textContent = 'Aún no configurado — falta el GID de la pestaña "Historial".';
+    elHistEstado.style.color = 'var(--ink-faint)';
+  }
+})();
+</script>
+
+</body>
+</html>

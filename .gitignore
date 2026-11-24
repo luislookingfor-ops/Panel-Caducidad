@@ -1,0 +1,12 @@
+# Respaldos intermedios y archivos de prueba pesados
+test_*.json
+saldos_*_positivos.json
+\!DOCTYPE html.txt
+
+# Entornos y dependencias
+node_modules/
+.vercel/
+
+# Archivos de sistema operativo
+Thumbs.db
+.DS_Store
