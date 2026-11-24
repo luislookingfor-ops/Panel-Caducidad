@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
+<!-- v2.1 login-fix 2026-11-24 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel de caducidad · Insumos y equipos de laboratorio</title>
+<title>Panel de caducidad Â· Insumos y equipos de laboratorio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -147,29 +148,29 @@
 
     <form id="login-form" autocomplete="on">
       <div class="login-field">
-        <label for="login-email">Correo Electrónico / Usuario</label>
+        <label for="login-email">Correo ElectrÃ³nico / Usuario</label>
         <input type="email" id="login-email" placeholder="Ingresa tu correo o usuario" autocomplete="username" required>
       </div>
 
       <div class="login-field">
-        <label for="login-password">Contraseña</label>
-        <input type="password" id="login-password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
+        <label for="login-password">ContraseÃ±a</label>
+        <input type="password" id="login-password" placeholder="Ingresa tu contraseÃ±a" autocomplete="current-password" required>
       </div>
 
       <button type="submit" id="login-btn" class="login-btn">
-        Iniciar Sesión
+        Iniciar SesiÃ³n
       </button>
     </form>
 
     <div style="margin-top:22px;text-align:center;border-top:1px solid var(--line);padding-top:14px;">
       <span style="font-size:11px;color:var(--ink-faint);display:inline-flex;align-items:center;gap:5px;">
-        🔒 Acceso exclusivo para personal autorizado
+        ðŸ”’ Acceso exclusivo para personal autorizado
       </span>
     </div>
   </div>
 </div>
 
-<!-- ===== PANEL PRINCIPAL (Requiere autenticación) ===== -->
+<!-- ===== PANEL PRINCIPAL (Requiere autenticaciÃ³n) ===== -->
 <div id="panel-view" class="pcz-root" style="display:none;">
 
   <!-- ===== HEADER ===== -->
@@ -179,13 +180,13 @@
         <div style="width:34px;height:34px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;">
           <i class="ti ti-flask" style="color:#fff;font-size:19px;" aria-hidden="true"></i>
         </div>
-        <h1 style="font-size:22px;font-weight:700;color:var(--primary-dark);">Panel de caducidad · Insumos y equipos de laboratorio</h1>
+        <h1 style="font-size:22px;font-weight:700;color:var(--primary-dark);">Panel de caducidad Â· Insumos y equipos de laboratorio</h1>
       </div>
-      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 0 44px;">Control de vencimiento, rotación y valor en riesgo · INGELAB S.A.S y JORGE ESTRELLA</p>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 0 44px;">Control de vencimiento, rotaciÃ³n y valor en riesgo Â· INGELAB S.A.S y JORGE ESTRELLA</p>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <div style="background:var(--primary-soft);border:0.5px solid var(--primary);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--primary-dark);">
-        Corte de análisis <span class="pcz-num" id="corte-fecha" style="font-weight:600;">—</span>
+        Corte de anÃ¡lisis <span class="pcz-num" id="corte-fecha" style="font-weight:600;">â€”</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:0.5px solid var(--line);border-radius:10px;padding:6px 12px;">
         <span style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
@@ -193,7 +194,7 @@
           <strong id="user-display" style="color:var(--ink);">Usuario</strong>
         </span>
         <button id="btn-logout" type="button" style="height:26px;padding:0 10px;font-size:11px;background:var(--critical-soft);color:var(--critical-text);border:0.5px solid #F5C6CB;border-radius:6px;cursor:pointer;font-weight:600;">
-          Cerrar sesión
+          Cerrar sesiÃ³n
         </button>
       </div>
     </div>
@@ -203,14 +204,14 @@
   <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px;background:#EAF6F7;border:1.5px solid var(--primary);border-radius:12px;padding:12px 16px;">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3F9468;"></span>
-      <strong style="font-size:13px;color:var(--primary-dark);">Conexión API ERP (047 & 079):</strong>
+      <strong style="font-size:13px;color:var(--primary-dark);">ConexiÃ³n API ERP (047 & 079):</strong>
     </div>
     <button id="btn-conectar-erp" class="pcz-btn" style="background:var(--primary);display:flex;align-items:center;gap:6px;">
-      ⚡ Cargar desde API ERP
+      âš¡ Cargar desde API ERP
     </button>
     <label style="font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px;cursor:pointer;background:#fff;padding:6px 10px;border-radius:8px;border:0.5px solid var(--line);">
       <input type="checkbox" id="chk-solo-con-venc" checked style="cursor:pointer;">
-      Solo ítems con fecha de caducidad (Lote / Vencimiento)
+      Solo Ã­tems con fecha de caducidad (Lote / Vencimiento)
     </label>
     <span style="font-size:11px;color:var(--ink-soft);margin-left:auto;">
       API Insoft (Bodegas + <b>nroLote</b> + <b>fechaVencimiento</b>) + Catalyst (Costo/Marca + Ventas)
@@ -219,7 +220,7 @@
 
   <details style="margin-bottom:12px;">
     <summary style="cursor:pointer;font-size:11.5px;color:var(--ink-soft);font-weight:600;padding:4px 2px;">
-      + Conexión de respaldo con Google Sheets (JSONP / CSV)
+      + ConexiÃ³n de respaldo con Google Sheets (JSONP / CSV)
     </summary>
     <!-- ===== FUENTE DE DATOS GOOGLE SHEETS ===== -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:12px 14px;">
@@ -236,20 +237,20 @@
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:12px 14px;">
       <i class="ti ti-cloud" style="color:var(--ink-soft);font-size:16px;" aria-hidden="true"></i>
       <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;">URL CSV publicada:</span>
-      <input id="sheet-url" class="pcz-input" type="text" placeholder="Pega aquí la URL CSV publicada" style="flex:1;min-width:220px;">
+      <input id="sheet-url" class="pcz-input" type="text" placeholder="Pega aquÃ­ la URL CSV publicada" style="flex:1;min-width:220px;">
       <button id="btn-conectar" class="pcz-btn">Conectar</button>
       <button id="btn-refrescar" class="pcz-btn" style="background:var(--surface);color:var(--primary-dark);">Actualizar</button>
       <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-soft);white-space:nowrap;cursor:pointer;">
         <input id="chk-proxy" type="checkbox" style="cursor:pointer;">
-        Usar proxy CORS público
+        Usar proxy CORS pÃºblico
       </label>
     </div>
   </details>
   <div id="estado-fuente-wrap" style="margin-bottom:20px;">
-    <span id="estado-fuente" style="font-size:11px;color:var(--ink-faint);">Conectando con Google Sheets…</span>
+    <span id="estado-fuente" style="font-size:11px;color:var(--ink-faint);">Conectando con Google Sheetsâ€¦</span>
     <div id="estado-detalle" style="font-size:10.5px;color:var(--critical-text);margin-top:2px;"></div>
     <div id="estado-proxy-note" style="font-size:10px;color:var(--ink-faint);margin-top:2px;display:none;">
-      El proxy CORS envía tu hoja a través de un servicio de terceros para poder leerla desde el navegador. Se prueban 3 proveedores en cadena (allorigins, corsproxy.io, codetabs) — si uno falla, se intenta el siguiente automáticamente. No es necesario si el panel se sirve desde un dominio propio con CORS habilitado en el origen de datos.
+      El proxy CORS envÃ­a tu hoja a travÃ©s de un servicio de terceros para poder leerla desde el navegador. Se prueban 3 proveedores en cadena (allorigins, corsproxy.io, codetabs) â€” si uno falla, se intenta el siguiente automÃ¡ticamente. No es necesario si el panel se sirve desde un dominio propio con CORS habilitado en el origen de datos.
     </div>
   </div>
 
@@ -258,27 +259,27 @@
     <i class="ti ti-filter" style="color:var(--ink-soft);font-size:16px;" aria-hidden="true"></i>
 
     <div class="ms" id="ms-empresa">
-      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las empresas</span> ▾</button>
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las empresas</span> â–¾</button>
       <div class="ms-panel"></div>
     </div>
     <div class="ms" id="ms-bodega">
-      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las bodegas</span> ▾</button>
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las bodegas</span> â–¾</button>
       <div class="ms-panel"></div>
     </div>
     <div class="ms" id="ms-marca">
-      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las marcas</span> ▾</button>
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todas las marcas</span> â–¾</button>
       <div class="ms-panel"></div>
     </div>
     <div class="ms" id="ms-riesgo">
-      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los rangos</span> ▾</button>
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los rangos</span> â–¾</button>
       <div class="ms-panel"></div>
     </div>
     <div class="ms" id="ms-mes">
-      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los meses</span> ▾</button>
+      <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los meses</span> â–¾</button>
       <div class="ms-panel"></div>
     </div>
 
-    <input id="f-buscar" type="text" placeholder="Buscar código, descripción o lote" style="flex:1;min-width:180px;height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--surface-soft);">
+    <input id="f-buscar" type="text" placeholder="Buscar cÃ³digo, descripciÃ³n o lote" style="flex:1;min-width:180px;height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--surface-soft);">
     <button id="f-reset" style="height:34px;border-radius:8px;border:0.5px solid var(--line);background:var(--surface);padding:0 12px;font-size:12px;color:var(--ink-soft);cursor:pointer;">Limpiar filtros</button>
   </div>
 
@@ -288,26 +289,26 @@
   <!-- ===== CHARTS ===== -->
   <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:22px;">
     <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;">
-      <h3 style="font-size:14px;color:var(--ink);margin-bottom:4px;">Distribución de valor en riesgo por rango de vencimiento</h3>
+      <h3 style="font-size:14px;color:var(--ink);margin-bottom:4px;">DistribuciÃ³n de valor en riesgo por rango de vencimiento</h3>
       <p style="font-size:11px;color:var(--ink-faint);margin:0 0 10px;">Costo de unidades sin vender agrupado por urgencia</p>
       <div style="position:relative;height:230px;">
-        <canvas id="chartBandas" role="img" aria-label="Gráfico de barras del valor en riesgo por rango de días para vencer">Valor en riesgo agrupado por rango de días para caducar.</canvas>
+        <canvas id="chartBandas" role="img" aria-label="GrÃ¡fico de barras del valor en riesgo por rango de dÃ­as para vencer">Valor en riesgo agrupado por rango de dÃ­as para caducar.</canvas>
       </div>
     </div>
     <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;">
       <h3 style="font-size:14px;color:var(--ink);margin-bottom:4px;">Valor en riesgo por marca</h3>
-      <p style="font-size:11px;color:var(--ink-faint);margin:0 0 10px;">Participación sobre el total filtrado</p>
+      <p style="font-size:11px;color:var(--ink-faint);margin:0 0 10px;">ParticipaciÃ³n sobre el total filtrado</p>
       <div id="leyenda-marca" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-size:11px;color:var(--ink-soft);"></div>
       <div style="position:relative;height:190px;">
-        <canvas id="chartMarca" role="img" aria-label="Gráfico de dona del valor en riesgo por marca">Valor en riesgo distribuido por marca de producto.</canvas>
+        <canvas id="chartMarca" role="img" aria-label="GrÃ¡fico de dona del valor en riesgo por marca">Valor en riesgo distribuido por marca de producto.</canvas>
       </div>
     </div>
   </div>
 
   <!-- ===== ROTACION ===== -->
   <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:22px;">
-    <h3 style="font-size:14px;color:var(--ink);margin-bottom:2px;">Índice de rotación por marca</h3>
-    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Unidades vendidas / gestionadas sobre el stock próximo a vencer</p>
+    <h3 style="font-size:14px;color:var(--ink);margin-bottom:2px;">Ãndice de rotaciÃ³n por marca</h3>
+    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Unidades vendidas / gestionadas sobre el stock prÃ³ximo a vencer</p>
     <div id="rotacion-list" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
 
@@ -322,13 +323,13 @@
         <thead>
           <tr style="text-align:left;color:var(--ink-soft);border-bottom:0.5px solid var(--line);">
             <th style="padding:8px 6px;">Empresa</th>
-            <th style="padding:8px 6px;">Código</th>
-            <th style="padding:8px 6px;">Descripción</th>
+            <th style="padding:8px 6px;">CÃ³digo</th>
+            <th style="padding:8px 6px;">DescripciÃ³n</th>
             <th style="padding:8px 6px;">Marca</th>
             <th style="padding:8px 6px;">Bodega</th>
             <th style="padding:8px 6px;">Lote (ERP)</th>
             <th style="padding:8px 6px;">Vence (Caducidad)</th>
-            <th style="padding:8px 6px;width:170px;">Días para caducar</th>
+            <th style="padding:8px 6px;width:170px;">DÃ­as para caducar</th>
             <th style="padding:8px 6px;text-align:right;">Costo unit.</th>
             <th style="padding:8px 6px;text-align:right;">Stock</th>
             <th style="padding:8px 6px;text-align:right;">Vendido</th>
@@ -349,15 +350,15 @@
   <!-- ===== HISTORICO DE GESTION ===== -->
   <div style="background:var(--surface);border:0.5px solid var(--line);border-radius:12px;padding:16px;margin-top:22px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
-      <h3 style="font-size:14px;color:var(--ink);">Histórico de gestión</h3>
+      <h3 style="font-size:14px;color:var(--ink);">HistÃ³rico de gestiÃ³n</h3>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button id="btn-hist-refrescar" class="pcz-btn" style="background:var(--surface);color:var(--primary-dark);">Actualizar historial</button>
       </div>
     </div>
-    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Lee la pestaña "Historial" de tu Google Sheet (solo lectura) — cada fila que hayas guardado ahí manualmente, con la combinación de filtros y fecha que elegiste.</p>
+    <p style="font-size:11px;color:var(--ink-faint);margin:0 0 12px;">Lee la pestaÃ±a "Historial" de tu Google Sheet (solo lectura) â€” cada fila que hayas guardado ahÃ­ manualmente, con la combinaciÃ³n de filtros y fecha que elegiste.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
       <div class="ms" id="ms-hist-grupo">
-        <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los grupos</span> ▾</button>
+        <button type="button" class="ms-btn"><span class="ms-btn-label">Todos los grupos</span> â–¾</button>
         <div class="ms-panel"></div>
       </div>
       <select id="hist-metrica" style="height:34px;border-radius:8px;border:0.5px solid var(--line);padding:0 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);background:var(--surface-soft);">
@@ -368,10 +369,10 @@
       <span id="hist-estado" style="font-size:11px;color:var(--ink-faint);"></span>
     </div>
     <div style="position:relative;height:260px;">
-      <canvas id="chartHistorial" role="img" aria-label="Gráfico de evolución del histórico de gestión">Evolución en el tiempo de los cierres guardados en la pestaña Historial.</canvas>
+      <canvas id="chartHistorial" role="img" aria-label="GrÃ¡fico de evoluciÃ³n del histÃ³rico de gestiÃ³n">EvoluciÃ³n en el tiempo de los cierres guardados en la pestaÃ±a Historial.</canvas>
     </div>
     <p style="font-size:10.5px;color:var(--ink-faint);margin-top:10px;">
-      Columnas esperadas en la pestaña <b>Historial</b>: <b>fecha, empresa, valorEnRiesgo, pctGestionado, valorRecuperado</b> (una fila por cada combinación de filtros que quieras seguir, cargada a mano). La columna "empresa" puede contener cualquier texto que describa lo que filtraste ese día (ej. "INGELAB S.A.S", "Bodega B1", "INGELAB S.A.S · Crítico").
+      Columnas esperadas en la pestaÃ±a <b>Historial</b>: <b>fecha, empresa, valorEnRiesgo, pctGestionado, valorRecuperado</b> (una fila por cada combinaciÃ³n de filtros que quieras seguir, cargada a mano). La columna "empresa" puede contener cualquier texto que describa lo que filtraste ese dÃ­a (ej. "INGELAB S.A.S", "Bodega B1", "INGELAB S.A.S Â· CrÃ­tico").
     </p>
   </div>
 
@@ -382,22 +383,22 @@
 <script>
 (function(){
 
-  // ===== Para conectar de forma permanente: pega tu URL CSV publicada aquí =====
+  // ===== Para conectar de forma permanente: pega tu URL CSV publicada aquÃ­ =====
   var SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQsLLEBsEkcGmJFwVvrPxZRhArRKZveWNS6_bGok1pnrYWkzsz1fE49DAVf6HxOEAwY_Dypp2Z53lT4/pub?gid=0&single=true&output=csv';
   // ID de hoja (metodo recomendado, sin proxy). Pega aqui el ID de tu Google Sheet real (no el de /pub).
   var SHEET_ID_JSONP = '1Fo-l_OT2Rn3eWWvLpZD8eejzWbH-73ASKAYmCfzDgTU';
   var SHEET_GID_JSONP = '0';
-  // GID de la pestaña "Historial" (solo lectura). Pegalo aqui cuando la crees: numero que aparece
-  // en la URL despues de #gid= cuando tienes esa pestaña abierta en Google Sheets.
+  // GID de la pestaÃ±a "Historial" (solo lectura). Pegalo aqui cuando la crees: numero que aparece
+  // en la URL despues de #gid= cuando tienes esa pestaÃ±a abierta en Google Sheets.
   var SHEET_GID_HISTORIAL = '';
 
   var ZONE = {
-    critical:{label:'Crítico', max:15, color:'#C43B45', soft:'#FBE4E5', text:'#8E232B'},
+    critical:{label:'CrÃ­tico', max:15, color:'#C43B45', soft:'#FBE4E5', text:'#8E232B'},
     warning:{label:'Alto', max:30, color:'#D98F2B', soft:'#FBEDD8', text:'#9C6415'},
     caution:{label:'Medio', max:60, color:'#3E7FB0', soft:'#E1EDF6', text:'#28587D'},
     safe:{label:'Bajo', max:Infinity, color:'#3F9468', soft:'#E1F0E7', text:'#286B48'},
     sold:{label:'Vendido', color:'#5B6B6E', soft:'#E7ECEC', text:'#3E4A4C'},
-    unknown:{label:'Fecha inválida', color:'#9B5DE5', soft:'#F1E6FB', text:'#6B3FA0'}
+    unknown:{label:'Fecha invÃ¡lida', color:'#9B5DE5', soft:'#F1E6FB', text:'#6B3FA0'}
   };
   var ZONE_ORDER = ['critical','warning','caution','safe'];
 
@@ -730,23 +731,23 @@
 
   function cargarHistorial(){
     if (!SHEET_ID_JSONP && !elSheetIdInput.value.trim()){
-      elHistEstado.textContent = 'Configura primero la conexión principal (arriba) con el ID de tu hoja.';
+      elHistEstado.textContent = 'Configura primero la conexiÃ³n principal (arriba) con el ID de tu hoja.';
       elHistEstado.style.color = 'var(--ink-faint)';
       return;
     }
     if (!SHEET_GID_HISTORIAL){
-      elHistEstado.textContent = 'Falta configurar el GID de la pestaña "Historial" en el código (SHEET_GID_HISTORIAL).';
+      elHistEstado.textContent = 'Falta configurar el GID de la pestaÃ±a "Historial" en el cÃ³digo (SHEET_GID_HISTORIAL).';
       elHistEstado.style.color = 'var(--critical-text)';
       return;
     }
     var sheetId = extraerSheetId(elSheetIdInput.value.trim() || SHEET_ID_JSONP);
-    elHistEstado.textContent = 'Cargando historial…';
+    elHistEstado.textContent = 'Cargando historialâ€¦';
     elHistEstado.style.color = 'var(--ink-faint)';
     cargarViaJsonp(sheetId, SHEET_GID_HISTORIAL, function(table){
       HISTORIAL = historialRowsFromGvizTable(table).sort(function(a,b){ return a.fecha - b.fecha; });
       var grupos = Array.from(new Set(HISTORIAL.map(function(r){ return r.empresa; }))).sort();
       msHistGrupo.setOptions(grupos.map(function(g){ return {value:g, label:g}; }));
-      elHistEstado.textContent = HISTORIAL.length + ' registro(s) cargados · última actualización: ' + horaActual();
+      elHistEstado.textContent = HISTORIAL.length + ' registro(s) cargados Â· Ãºltima actualizaciÃ³n: ' + horaActual();
       elHistEstado.style.color = 'var(--safe-text)';
       renderHistorial();
     }, function(err){
@@ -830,8 +831,8 @@
       {label:'Valor en riesgo', value: fmtMoney(valorRiesgo), sub:'costo de unidades sin vender', color:'var(--primary-dark)'},
       {label:'% gestionado', value: fmtPct(pctGestionado), sub: vendidoTotal+' de '+stockTotal+' unidades', color:'var(--safe-text)'},
       {label:'Valor recuperado', value: fmtMoney(valorRecuperado), sub:'sobre '+fmtMoney(valorInicial)+' inicial', color:'var(--ink)'},
-      {label:'Stock actual total', value: stockActualTotal.toLocaleString('es-EC'), sub:'unidades sin vender (stock − vendido)', color:'var(--caution-text)'},
-      {label:'Ítems críticos', value: criticos, sub:'≤ 15 días para vencer', color:'var(--critical-text)'},
+      {label:'Stock actual total', value: stockActualTotal.toLocaleString('es-EC'), sub:'unidades sin vender (stock âˆ’ vendido)', color:'var(--caution-text)'},
+      {label:'Ãtems crÃ­ticos', value: criticos, sub:'â‰¤ 15 dÃ­as para vencer', color:'var(--critical-text)'},
       {label:'SKUs monitoreados', value: rows.length, sub:'lotes activos en el corte', color:'var(--ink)'}
     ];
     document.getElementById('kpi-row').innerHTML = kpis.map(function(k){
@@ -897,7 +898,7 @@
         + '<span style="width:100px;font-size:12px;color:var(--ink);">'+m+'</span>'
         + '<div style="flex:1;height:8px;background:var(--surface-soft);border-radius:4px;overflow:hidden;">'
         + '<div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+barColor+';"></div></div>'
-        + '<span class="pcz-num" style="width:80px;text-align:right;font-size:12px;color:var(--ink-soft);">'+r.vendido+'/'+r.stock+' · '+pct.toFixed(0)+'%</span>'
+        + '<span class="pcz-num" style="width:80px;text-align:right;font-size:12px;color:var(--ink-soft);">'+r.vendido+'/'+r.stock+' Â· '+pct.toFixed(0)+'%</span>'
         + '</div>';
     }).join('') || '<span style="font-size:12px;color:var(--ink-faint);">Sin datos para el filtro actual.</span>';
 
@@ -907,10 +908,10 @@
       var z = ZONE[d.zona];
       var diasValido = !isNaN(d.dias);
       var pctBar = diasValido ? Math.min(Math.max(d.dias,0)/90*100, 100) : 0;
-      var diasLabel = diasValido ? (d.dias + 'd') : '—';
+      var diasLabel = diasValido ? (d.dias + 'd') : 'â€”';
       var vFecha = d.vence;
       var fechaStr = isNaN(vFecha.getTime())
-        ? '—'
+        ? 'â€”'
         : String(vFecha.getDate()).padStart(2,'0')+'/'+String(vFecha.getMonth()+1).padStart(2,'0')+'/'+vFecha.getFullYear();
       var empColor = d.empresa==='INGELAB S.A.S' ? 'var(--primary)' : '#7A4FB0';
       var empSoft = d.empresa==='INGELAB S.A.S' ? 'var(--primary-soft)' : '#EEE5F7';
@@ -934,7 +935,7 @@
         + '<td class="pcz-num" style="padding:8px 6px;text-align:right;font-weight:600;'+(d.inconsistente?'color:var(--critical);':'')+'">'+d.sinVender+'</td>'
         + '<td class="pcz-num" style="padding:8px 6px;text-align:right;font-weight:600;">'+fmtMoney(d.valorRiesgo)+'</td>'
         + '<td style="padding:8px 6px;"><span style="background:'+z.soft+';color:'+z.text+';font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;">'+z.label+'</span>'
-            + (d.inconsistente ? ' <span title="Vendido supera al stock registrado" style="color:var(--critical);font-size:10.5px;font-weight:700;">⚠ inventario</span>' : '')
+            + (d.inconsistente ? ' <span title="Vendido supera al stock registrado" style="color:var(--critical);font-size:10.5px;font-weight:700;">âš  inventario</span>' : '')
             + '</td>'
         + '</tr>';
     }).join('');
@@ -954,10 +955,10 @@
   function mostrarError(mensaje, detalleTecnico, sugerirProxy){
     elEstado.textContent = 'No se pudo conectar a Google Sheets';
     elEstado.style.color = 'var(--critical-text)';
-    elEstadoDetalle.textContent = (mensaje || '') + (detalleTecnico ? ' — Detalle técnico: ' + detalleTecnico : '');
+    elEstadoDetalle.textContent = (mensaje || '') + (detalleTecnico ? ' â€” Detalle tÃ©cnico: ' + detalleTecnico : '');
     elProxyNote.style.display = sugerirProxy ? 'block' : 'none';
     if (sugerirProxy && !chkProxy.checked){
-      elEstadoDetalle.textContent += ' Google no habilita el acceso directo desde el navegador para este tipo de enlace (falta la cabecera CORS en su respuesta). Activa la casilla "Usar proxy CORS público" de arriba y presiona Actualizar para intentar cargarlo a través de un intermediario.';
+      elEstadoDetalle.textContent += ' Google no habilita el acceso directo desde el navegador para este tipo de enlace (falta la cabecera CORS en su respuesta). Activa la casilla "Usar proxy CORS pÃºblico" de arriba y presiona Actualizar para intentar cargarlo a travÃ©s de un intermediario.';
     }
   }
 
@@ -985,12 +986,12 @@
     var inconsistencias = DATA.filter(function(d){ return d.inconsistente; }).length;
     var fechasInvalidas = DATA.filter(function(d){ return d.zona === 'unknown'; }).length;
     elEstado.style.color = 'var(--safe-text)';
-    elEstado.innerHTML = '<b>Conectado</b>' + (origenLabel ? ' (' + origenLabel + ')' : '') + ' · ' + rawRows.length + ' registros · Última actualización: ' + horaActual();
+    elEstado.innerHTML = '<b>Conectado</b>' + (origenLabel ? ' (' + origenLabel + ')' : '') + ' Â· ' + rawRows.length + ' registros Â· Ãšltima actualizaciÃ³n: ' + horaActual();
     var avisos = [];
-    if (inconsistencias) avisos.push('⚠ ' + inconsistencias + ' lote(s) con inconsistencia de inventario (vendido mayor al stock registrado)');
-    if (fechasInvalidas) avisos.push('⚠ ' + fechasInvalidas + ' lote(s) con fecha de vencimiento no reconocida (filtro "Fecha inválida") — revisa que esa celda tenga una fecha real, no texto como "0"');
+    if (inconsistencias) avisos.push('âš  ' + inconsistencias + ' lote(s) con inconsistencia de inventario (vendido mayor al stock registrado)');
+    if (fechasInvalidas) avisos.push('âš  ' + fechasInvalidas + ' lote(s) con fecha de vencimiento no reconocida (filtro "Fecha invÃ¡lida") â€” revisa que esa celda tenga una fecha real, no texto como "0"');
     elEstadoDetalle.style.color = avisos.length ? 'var(--critical-text)' : 'var(--ink-faint)';
-    elEstadoDetalle.textContent = avisos.join(' · ');
+    elEstadoDetalle.textContent = avisos.join(' Â· ');
   }
 
 
@@ -1002,7 +1003,7 @@
       elProxyNote.style.display = 'none';
       return;
     }
-    elEstado.textContent = 'Conectando con Google Sheets…';
+    elEstado.textContent = 'Conectando con Google Sheetsâ€¦';
     elEstado.style.color = 'var(--ink-faint)';
     elEstadoDetalle.textContent = '';
     elProxyNote.style.display = 'none';
@@ -1013,7 +1014,7 @@
 
     intentarConProxies(url, candidatos, 0, function(csvText, proxyUsado){
         if (!csvText || !csvText.trim()){
-          mostrarError('El CSV está vacío.', null, false);
+          mostrarError('El CSV estÃ¡ vacÃ­o.', null, false);
           return;
         }
         var parsed = Papa.parse(csvText.trim(), { header:true, skipEmptyLines:true, transformHeader:function(h){ return h.trim(); } });
@@ -1029,7 +1030,7 @@
         }
 
         var rawRows = parsed.data.map(rawFromCsvRow).filter(function(r){ return r.codigo || r.desc; });
-        aplicarRawRows(rawRows, proxyUsado ? 'vía proxy ' + proxyUsado : null);
+        aplicarRawRows(rawRows, proxyUsado ? 'vÃ­a proxy ' + proxyUsado : null);
       },
       function(err){
         var esPosibleCors = !chkProxy.checked;
@@ -1048,7 +1049,7 @@
     }
     var sheetId = extraerSheetId(input);
     var gid = gidOverride || extraerGid(input);
-    elEstado.textContent = 'Conectando con Google Sheets (sin proxy)…';
+    elEstado.textContent = 'Conectando con Google Sheets (sin proxy)â€¦';
     elEstado.style.color = 'var(--ink-faint)';
     elEstadoDetalle.textContent = '';
     elProxyNote.style.display = 'none';
@@ -1064,7 +1065,7 @@
       }
       aplicarRawRows(rawRows.filter(function(r){ return r.codigo || r.desc; }), 'directo, sin proxy');
     }, function(err){
-      mostrarError('No se pudo conectar con este método. Revisa que el ID sea correcto y que la hoja tenga acceso "Cualquiera con el enlace puede ver".', err.message, false);
+      mostrarError('No se pudo conectar con este mÃ©todo. Revisa que el ID sea correcto y que la hoja tenga acceso "Cualquiera con el enlace puede ver".', err.message, false);
     });
   }
 
@@ -1076,11 +1077,11 @@
     var filas = soloConVenc
       ? ERP_ROWS_CACHE.filter(function(r){ return r.vencimiento && String(r.vencimiento).trim() !== ''; })
       : ERP_ROWS_CACHE;
-    aplicarRawRows(filas, 'API ERP 047 & 079 · Catalyst + Insoft');
+    aplicarRawRows(filas, 'API ERP 047 & 079 Â· Catalyst + Insoft');
   }
 
   function loadFromErpApi(){
-    elEstado.textContent = 'Cargando datos desde la API ERP combinada (047 & 079)…';
+    elEstado.textContent = 'Cargando datos desde la API ERP combinada (047 & 079)â€¦';
     elEstado.style.color = 'var(--primary)';
     elEstadoDetalle.textContent = '';
     elProxyNote.style.display = 'none';
@@ -1140,7 +1141,7 @@
     elBuscar.value=''; render();
   });
 
-  // ===== AUTENTICACIÓN / LOGIN =====
+  // ===== AUTENTICACIÃ“N / LOGIN =====
   var ADMIN_USER = 'logistica@ingelabcorp.com';
   var ADMIN_PASS = 'logisticaingelab2026@';
 
@@ -1188,7 +1189,7 @@
         showPanel();
       } else {
         loginError.style.display = 'block';
-        loginError.textContent = 'Correo electrónico o contraseña incorrectos.';
+        loginError.textContent = 'Correo electrÃ³nico o contraseÃ±a incorrectos.';
         loginPassword.focus();
       }
     });
@@ -1202,7 +1203,7 @@
     });
   }
 
-  // Arranque: validar sesión previa o mostrar pantalla de login
+  // Arranque: validar sesiÃ³n previa o mostrar pantalla de login
   if (isAuthenticated()){
     showPanel();
   } else {
@@ -1212,7 +1213,7 @@
   if (SHEET_GID_HISTORIAL){
     cargarHistorial();
   } else {
-    elHistEstado.textContent = 'Aún no configurado — falta el GID de la pestaña "Historial".';
+    elHistEstado.textContent = 'AÃºn no configurado â€” falta el GID de la pestaÃ±a "Historial".';
     elHistEstado.style.color = 'var(--ink-faint)';
   }
 })();
