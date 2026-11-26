@@ -7,10 +7,13 @@ Combina 3 APIs de Catalyst e Insoft para 047 (JORGE ESTRELLA) y 079 (INGELAB GRO
 """
 
 import json
+import gzip
+import zlib
 import urllib.request
 import sys
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 EMPRESAS = [
@@ -44,10 +47,19 @@ def fetch_json(url, timeout=60, retries=3):
             print(f"Descargando (intento {attempt}/{retries}): {url} ...")
             req = urllib.request.Request(
                 url,
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'Accept-Encoding': 'gzip, deflate'
+                }
             )
             with urllib.request.urlopen(req, timeout=timeout) as response:
-                content = response.read().decode('utf-8', errors='ignore')
+                raw = response.read()
+                enc = (response.headers.get('Content-Encoding') or '').lower()
+                if 'gzip' in enc:
+                    raw = gzip.decompress(raw)
+                elif 'deflate' in enc:
+                    raw = zlib.decompress(raw)
+                content = raw.decode('utf-8', errors='ignore')
                 data = json.loads(content)
                 if not isinstance(data, list):
                     raise ValueError(f"Respuesta inesperada (se esperaba lista JSON, recibido {type(data).__name__})")
@@ -55,60 +67,78 @@ def fetch_json(url, timeout=60, retries=3):
         except Exception as e:
             last_err = e
             if attempt < retries:
-                time.sleep(2 * attempt)
+                time.sleep(1.5 * attempt)
     raise last_err
 
 def sincronizar():
+    t0 = time.time()
     base_dir = os.path.dirname(os.path.abspath(__file__))
     todas_las_filas = []
+
+    # Descargar las 6 APIs en paralelo para máxima velocidad
+    tareas = {}
+    for emp in EMPRESAS:
+        cod = emp['cod']
+        auth = emp['auth']
+        tareas[(cod, 'saldos')] = f"http://95.217.116.101:7777/insoftApi/ZOHO/saldos-items?pcod_empresa={cod}&pautorizacion={auth}&pcod_item="
+        tareas[(cod, 'prod')] = f"https://funciones-digital-strategy-831038044.development.catalystserverless.com/productos?pautorizacion={auth}&pcod_empresa={cod}"
+        tareas[(cod, 'ventas')] = f"https://funciones-digital-strategy-831038044.development.catalystserverless.com/ventas-historicas?pautorizacion={auth}&pcod_empresa={cod}"
+
+    resultados = {}
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        future_map = {executor.submit(fetch_json, url): key for key, url in tareas.items()}
+        for future, key in future_map.items():
+            try:
+                resultados[key] = future.result()
+            except Exception as e:
+                resultados[key] = e
 
     for emp in EMPRESAS:
         cod = emp['cod']
         nombre = emp['nombre']
-        auth = emp['auth']
         print(f"\n=======================================================")
         print(f"Sincronizando Empresa {cod} - {nombre}")
         print(f"=======================================================")
 
         # 1. API Saldos-Items (Insoft) -> Ahora incluye nroLote y fechaVencimiento
-        url_saldos = f"http://95.217.116.101:7777/insoftApi/ZOHO/saldos-items?pcod_empresa={cod}&pautorizacion={auth}&pcod_item="
-        try:
-            saldos = fetch_json(url_saldos)
+        saldos_res = resultados.get((cod, 'saldos'))
+        if isinstance(saldos_res, list):
+            saldos = saldos_res
             print(f"  [1/3] Saldos en bodegas: {len(saldos)} registros")
             saldos_activos = [s for s in saldos if float(s.get('saldoDisponible') or 0) > 0]
             print(f"        Saldos con stock disponible > 0: {len(saldos_activos)}")
             con_lote = [s for s in saldos_activos if s.get('nroLote')]
             print(f"        Registros con nroLote y fechaVencimiento: {len(con_lote)}")
             with open(os.path.join(base_dir, f"saldos_{cod}_positivos.json"), 'w', encoding='utf-8') as f:
-                json.dump(saldos_activos, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"  [AVISO] Error descargando saldos en vivo: {e}. Usando respaldo local.")
+                json.dump(saldos_activos, f, ensure_ascii=False, separators=(',', ':'))
+        else:
+            print(f"  [AVISO] Error descargando saldos en vivo: {saldos_res}. Usando respaldo local.")
             backup_saldos = os.path.join(base_dir, f"saldos_{cod}_positivos.json")
             saldos_activos = load_local_backup(backup_saldos)
 
         # 2. API Productos (Catalyst) -> costoPromedio, marca, regSanitario, fechaCaducaRegSanitario
-        url_prod = f"https://funciones-digital-strategy-831038044.development.catalystserverless.com/productos?pautorizacion={auth}&pcod_empresa={cod}"
-        try:
-            productos = fetch_json(url_prod)
+        prod_res = resultados.get((cod, 'prod'))
+        if isinstance(prod_res, list):
+            productos = prod_res
             print(f"  [2/3] Productos: {len(productos)} registros recibidos")
             prod_map = {p['codItem']: p for p in productos if p.get('codItem')}
             with open(os.path.join(base_dir, f"test_{cod}.json" if cod == "047" else f"test_{cod}_new.json"), 'w', encoding='utf-8') as f:
-                json.dump(productos, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"  [AVISO] Error descargando productos en vivo: {e}. Usando respaldo local.")
+                json.dump(productos, f, ensure_ascii=False, separators=(',', ':'))
+        else:
+            print(f"  [AVISO] Error descargando productos en vivo: {prod_res}. Usando respaldo local.")
             backup_prod = os.path.join(base_dir, f"test_{cod}.json" if cod == "047" else f"test_{cod}_new.json")
             prod_list = load_local_backup(backup_prod)
             prod_map = {p['codItem']: p for p in prod_list if p.get('codItem')}
 
         # 3. API Ventas Históricas (Catalyst) -> cantidad vendida
-        url_ventas = f"https://funciones-digital-strategy-831038044.development.catalystserverless.com/ventas-historicas?pautorizacion={auth}&pcod_empresa={cod}"
-        try:
-            ventas = fetch_json(url_ventas)
+        ventas_res = resultados.get((cod, 'ventas'))
+        if isinstance(ventas_res, list):
+            ventas = ventas_res
             print(f"  [3/3] Ventas históricas: {len(ventas)} facturas/líneas recibidas")
             with open(os.path.join(base_dir, f"test_ventas_{cod}.json"), 'w', encoding='utf-8') as f:
-                json.dump(ventas, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"  [AVISO] Error descargando ventas en vivo: {e}. Usando respaldo local.")
+                json.dump(ventas, f, ensure_ascii=False, separators=(',', ':'))
+        else:
+            print(f"  [AVISO] Error descargando ventas en vivo: {ventas_res}. Usando respaldo local.")
             backup_ventas = os.path.join(base_dir, f"test_ventas_{cod}.json")
             ventas = load_local_backup(backup_ventas)
 
@@ -234,11 +264,12 @@ def sincronizar():
                 'aumento': 0
             })
 
-    # Guardar archivo unificado
+    # Guardar archivo unificado en formato compacto (carga más rápida en web y CDN)
     salida_path = os.path.join(base_dir, 'datos_erp_combinados.json')
     with open(salida_path, 'w', encoding='utf-8') as f:
-        json.dump(todas_las_filas, f, ensure_ascii=False, indent=2)
+        json.dump(todas_las_filas, f, ensure_ascii=False, separators=(',', ':'))
 
+    elapsed = time.time() - t0
     con_venc = [f for f in todas_las_filas if f['vencimiento']]
     con_lote_real = [f for f in todas_las_filas if f['nroLoteReal']]
     con_ventas = [f for f in todas_las_filas if f['vendido'] > 0]
@@ -246,7 +277,7 @@ def sincronizar():
     total_stock_actual = sum(f['stock'] - f['vendido'] for f in todas_las_filas)
 
     print(f"\n=======================================================")
-    print(f"PROCESO FINALIZADO EXITOSAMENTE:")
+    print(f"PROCESO FINALIZADO EXITOSAMENTE en {elapsed:.1f}s:")
     print(f"Total registros con stock en bodega: {len(todas_las_filas)}")
     print(f"Registros con LOTE REAL del ERP (nroLote): {len(con_lote_real)}")
     print(f"Registros con FECHA DE VENCIMIENTO monitoreada: {len(con_venc)}")
