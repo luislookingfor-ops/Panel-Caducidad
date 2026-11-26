@@ -10,6 +10,7 @@ import json
 import urllib.request
 import sys
 import os
+import time
 from datetime import datetime
 
 EMPRESAS = [
@@ -36,15 +37,26 @@ def load_local_backup(path):
             continue
     return []
 
-def fetch_json(url, timeout=50):
-    print(f"Descargando: {url} ...")
-    req = urllib.request.Request(
-        url,
-        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        content = response.read().decode('utf-8', errors='ignore')
-        return json.loads(content)
+def fetch_json(url, timeout=60, retries=3):
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            print(f"Descargando (intento {attempt}/{retries}): {url} ...")
+            req = urllib.request.Request(
+                url,
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                content = response.read().decode('utf-8', errors='ignore')
+                data = json.loads(content)
+                if not isinstance(data, list):
+                    raise ValueError(f"Respuesta inesperada (se esperaba lista JSON, recibido {type(data).__name__})")
+                return data
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(2 * attempt)
+    raise last_err
 
 def sincronizar():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -100,75 +112,98 @@ def sincronizar():
             backup_ventas = os.path.join(base_dir, f"test_ventas_{cod}.json")
             ventas = load_local_backup(backup_ventas)
 
-        # Agrupar ventas por (codItem, codBodega, nroLote), (codItem, codBodega) y codItem
+        # Agrupar ventas por (codItem, codBodega, nroLote) y ventas sin lote por (codItem, codBodega)
         ventas_lote_map = {}
-        ventas_bodega_map = {}
+        ventas_bodega_sin_lote = {}
         ventas_item_total = {}
 
         for v in ventas:
-            it = v.get('codItem')
-            bd = v.get('codBodega')
-            lt = v.get('nroLote')
+            it = (v.get('codItem') or '').strip()
+            bd = (v.get('codBodega') or '').strip()
+            lt = (v.get('nroLote') or '').strip()
             cant = float(v.get('cantidad') or 0)
-            if it:
-                ventas_item_total[it] = ventas_item_total.get(it, 0) + cant
-                if bd:
-                    ventas_bodega_map[(it, bd)] = ventas_bodega_map.get((it, bd), 0) + cant
-                    if lt and lt != 'null':
-                        ventas_lote_map[(it, bd, lt)] = ventas_lote_map.get((it, bd, lt), 0) + cant
+            if not it:
+                continue
+            ventas_item_total[it] = ventas_item_total.get(it, 0) + cant
+            if bd:
+                if lt and lt.lower() != 'null':
+                    ventas_lote_map[(it, bd, lt)] = ventas_lote_map.get((it, bd, lt), 0) + cant
+                else:
+                    ventas_bodega_sin_lote[(it, bd)] = ventas_bodega_sin_lote.get((it, bd), 0) + cant
 
         print(f"        Total items con ventas registradas: {len(ventas_item_total)}")
         print(f"        Total unidades vendidas acumuladas: {sum(ventas_item_total.values()):,.1f}")
 
+        # Precalcular suma de saldos sin match exacto de lote por (codItem, codBodega) para repartir sin duplicar
+        sin_lote_match_saldos = {}
+        for s in saldos_activos:
+            cod_item = (s.get('codItem') or '').strip()
+            cod_bodega = (s.get('codBodega') or 'B1').strip()
+            lote_erp = (s.get('nroLote') or '').strip()
+            if lote_erp.lower() == 'null':
+                lote_erp = ''
+            if not (lote_erp and (cod_item, cod_bodega, lote_erp) in ventas_lote_map):
+                key = (cod_item, cod_bodega)
+                sin_lote_match_saldos[key] = sin_lote_match_saldos.get(key, 0.0) + float(s.get('saldoDisponible') or 0)
+
         # 4. Combinar Lotes de Almacén + Productos + Ventas Históricas
         for s in saldos_activos:
-            cod_item = s.get('codItem')
+            cod_item = (s.get('codItem') or '').strip()
             item = prod_map.get(cod_item, {})
-            
-            cod_bodega = s.get('codBodega') or 'B1'
-            nombre_bodega = s.get('nombreBodega') or ''
+
+            cod_bodega = (s.get('codBodega') or 'B1').strip()
+            nombre_bodega = (s.get('nombreBodega') or '').strip()
             bodega_display = f"{cod_bodega} · {nombre_bodega}" if nombre_bodega else cod_bodega
 
             # Lote y fecha de vencimiento:
             # 1. Prioridad: el nroLote y fechaVencimiento que vienen directamente en saldos-items
             # 2. Respaldo: el Registro Sanitario y fecha de caducidad de Registro Sanitario de productos
-            lote_erp = s.get('nroLote')
-            venc_erp = s.get('fechaVencimiento')
-            
-            reg_san = item.get('regSanitario')
-            fecha_reg = item.get('fechaCaducaRegSanitario')
+            lote_erp = (s.get('nroLote') or '').strip()
+            if lote_erp.lower() == 'null':
+                lote_erp = ''
+            venc_erp = (s.get('fechaVencimiento') or '').strip()
+            if venc_erp.lower() == 'null':
+                venc_erp = ''
 
-            if lote_erp and lote_erp.strip() and lote_erp != 'null':
-                lote_final = lote_erp.strip()
+            reg_san = (item.get('regSanitario') or '').strip()
+            if reg_san.lower() == 'null':
+                reg_san = ''
+            fecha_reg = (item.get('fechaCaducaRegSanitario') or '').strip()
+            if fecha_reg.lower() == 'null':
+                fecha_reg = ''
+
+            if lote_erp:
+                lote_final = lote_erp
                 tipo_lote = 'LOTE'
-            elif reg_san and reg_san.strip() and reg_san != 'null':
-                lote_final = reg_san.strip()
+            elif reg_san:
+                lote_final = reg_san
                 tipo_lote = 'REG_SANITARIO'
             else:
                 lote_final = 'S/L'
                 tipo_lote = 'SIN_LOTE'
 
-            if venc_erp and venc_erp.strip() and venc_erp != 'null':
-                venc_final = venc_erp.strip()
+            if venc_erp:
+                venc_final = venc_erp
                 origen_venc = 'Vencimiento de Lote'
-            elif fecha_reg and fecha_reg.strip() and fecha_reg != 'null':
-                venc_final = fecha_reg.strip()
+            elif fecha_reg:
+                venc_final = fecha_reg
                 origen_venc = 'Caducidad Reg. Sanitario'
             else:
                 venc_final = ''
                 origen_venc = 'Sin fecha'
 
-            # Unidades vendidas para este lote/bodega
-            vendido = 0
-            if lote_erp and (cod_item, cod_bodega, lote_erp) in ventas_lote_map:
-                vendido = ventas_lote_map[(cod_item, cod_bodega, lote_erp)]
-            elif (cod_item, cod_bodega) in ventas_bodega_map:
-                vendido = ventas_bodega_map[(cod_item, cod_bodega)]
-            elif cod_item in ventas_item_total and len(ventas_bodega_map) == 0:
-                vendido = ventas_item_total[cod_item]
-
             # Stock disponible actual en bodega
             saldo_actual = float(s.get('saldoDisponible') or 0)
+
+            # Unidades vendidas para este lote/bodega (evitando duplicar entre lotes de la misma bodega)
+            vendido = 0.0
+            if lote_erp and (cod_item, cod_bodega, lote_erp) in ventas_lote_map:
+                vendido = ventas_lote_map[(cod_item, cod_bodega, lote_erp)]
+            elif (cod_item, cod_bodega) in ventas_bodega_sin_lote:
+                total_saldo_grupo = sin_lote_match_saldos.get((cod_item, cod_bodega), 0.0)
+                if total_saldo_grupo > 0:
+                    vendido = ventas_bodega_sin_lote[(cod_item, cod_bodega)] * (saldo_actual / total_saldo_grupo)
+
             stock_base = saldo_actual + vendido
 
             marca = item.get('nombreTipo') or item.get('codMarca') or item.get('nombreGrupo') or 'GENERAL'
@@ -186,10 +221,13 @@ def sincronizar():
                 'codBodega': cod_bodega,
                 'lote': lote_final,
                 'tipoLote': tipo_lote,
-                'nroLoteReal': lote_erp or '',
-                'regSanitario': reg_san or '',
+                'nroLoteReal': lote_erp,
+                'regSanitario': reg_san,
                 'vencimiento': venc_final,
                 'origenVencimiento': origen_venc,
+                'fechaSaldo': s.get('fecha') or '',
+                'unidadMedida': item.get('codUnidadMedida') or item.get('unidadMedida') or '',
+                'precioPvp': round(float(item.get('precioPvp') or 0), 4),
                 'costo': costo,
                 'stock': round(stock_base, 2),
                 'vendido': round(vendido, 2),

@@ -211,7 +211,7 @@
       <strong style="font-size:13px;color:var(--primary-dark);">Conexión API ERP (047 & 079):</strong>
     </div>
     <button id="btn-conectar-erp" class="pcz-btn" style="background:var(--primary);display:flex;align-items:center;gap:6px;">
-      ⚡ Cargar desde API ERP
+      ⚡ Actualizar stock en vivo
     </button>
     <label style="font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px;cursor:pointer;background:#fff;padding:6px 10px;border-radius:8px;border:0.5px solid var(--line);">
       <input type="checkbox" id="chk-solo-con-venc" checked style="cursor:pointer;">
@@ -692,12 +692,21 @@
 
   function refreshFilterOptions(){
     var empresas = Array.from(new Set(DATA.map(function(d){return d.empresa;}))).sort();
-    var bodegas = Array.from(new Set(DATA.map(function(d){return d.bodega;}))).sort();
+    var bodegaNames = {};
+    DATA.forEach(function(d){
+      if (!d.bodega) return;
+      if (!bodegaNames[d.bodega]) bodegaNames[d.bodega] = new Set();
+      if (d.nombreBodega) bodegaNames[d.bodega].add(d.nombreBodega);
+    });
+    var bodegas = Object.keys(bodegaNames).sort();
     var marcas = Array.from(new Set(DATA.map(function(d){return d.marca;}))).sort();
     var meses = Array.from(new Set(DATA.map(function(d){return d.mesAno;}).filter(Boolean))).sort();
 
     msEmpresa.setOptions(empresas.map(function(v){ return {value:v, label:v}; }));
-    msBodega.setOptions(bodegas.map(function(v){ return {value:v, label:v}; }));
+    msBodega.setOptions(bodegas.map(function(v){
+      var names = Array.from(bodegaNames[v]);
+      return { value: v, label: names.length ? (v + ' · ' + names.join(' / ')) : v };
+    }));
     msMarca.setOptions(marcas.map(function(v){ return {value:v, label:v}; }));
     msMes.setOptions(meses.map(function(v){
       var parts = v.split('-'); var mesNombre = MESES_ES[parseInt(parts[1],10)-1];
@@ -917,8 +926,9 @@
       var fechaStr = isNaN(vFecha.getTime())
         ? '—'
         : String(vFecha.getDate()).padStart(2,'0')+'/'+String(vFecha.getMonth()+1).padStart(2,'0')+'/'+vFecha.getFullYear();
-      var empColor = d.empresa==='INGELAB S.A.S' ? 'var(--primary)' : '#7A4FB0';
-      var empSoft = d.empresa==='INGELAB S.A.S' ? 'var(--primary-soft)' : '#EEE5F7';
+      var isIngelab = (d.empresa || '').toUpperCase().indexOf('INGELAB') !== -1;
+      var empColor = isIngelab ? 'var(--primary)' : '#7A4FB0';
+      var empSoft = isIngelab ? 'var(--primary-soft)' : '#EEE5F7';
       return '<tr style="border-bottom:0.5px solid var(--line);">'
         + '<td style="padding:8px 6px;"><span style="background:'+empSoft+';color:'+empColor+';font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;">'+d.empresa+'</span></td>'
         + '<td class="pcz-num" style="padding:8px 6px;color:var(--ink);">'+d.codigo+'</td>'
@@ -1074,52 +1084,217 @@
   }
 
   var ERP_ROWS_CACHE = [];
+  var ERP_ORIGIN_LABEL = 'API ERP 047 & 079 · Catalyst + Insoft';
+  var INSOFT_ENDPOINTS = [
+    {
+      cod: '047',
+      nombre: 'JORGE ESTRELLA',
+      url: 'http://95.217.116.101:7777/insoftApi/ZOHO/saldos-items?pcod_empresa=047&pautorizacion=047-1001089458071&pcod_item='
+    },
+    {
+      cod: '079',
+      nombre: 'INGELAB GROUP S.A.S',
+      url: 'http://95.217.116.101:7777/insoftApi/ZOHO/saldos-items?pcod_empresa=079&pautorizacion=079-1001176123971&pcod_item='
+    }
+  ];
 
-  function filtrarYAplicarErp(){
+  function filtrarYAplicarErp(origenCustom){
     if (!ERP_ROWS_CACHE.length) return;
+    if (origenCustom) ERP_ORIGIN_LABEL = origenCustom;
     var soloConVenc = chkSoloConVenc && chkSoloConVenc.checked;
     var filas = soloConVenc
       ? ERP_ROWS_CACHE.filter(function(r){ return r.vencimiento && String(r.vencimiento).trim() !== ''; })
       : ERP_ROWS_CACHE;
-    aplicarRawRows(filas, 'API ERP 047 & 079 · Catalyst + Insoft');
+    aplicarRawRows(filas, ERP_ORIGIN_LABEL);
   }
 
-  function loadFromErpApi(){
-    elEstado.textContent = 'Cargando datos desde la API ERP combinada (047 & 079)…';
+  function cleanErpStr(v){
+    if (v === null || v === undefined) return '';
+    var s = String(v).trim();
+    return s.toLowerCase() === 'null' ? '' : s;
+  }
+
+  function mergeLiveSaldosWithCache(emp, saldos, baseRows){
+    var metaByCodigo = {};
+    var salesByKey = {};
+    baseRows.forEach(function(r){
+      if (r.empresaCod && r.empresaCod !== emp.cod) return;
+      if (!r.empresaCod && r.empresa !== emp.nombre) return;
+      if (r.codigo && !metaByCodigo[r.codigo]) metaByCodigo[r.codigo] = r;
+      var k = (r.codigo || '') + '|||' + (r.codBodega || r.bodega || '') + '|||' + (r.nroLoteReal || r.lote || '');
+      if (!salesByKey[k]) salesByKey[k] = Number(r.vendido || 0);
+    });
+
+    return saldos.filter(function(s){
+      return Number(s.saldoDisponible || 0) > 0;
+    }).map(function(s){
+      var codItem = cleanErpStr(s.codItem);
+      var meta = metaByCodigo[codItem] || {};
+      var codBodega = cleanErpStr(s.codBodega) || 'B1';
+      var nombreBodega = cleanErpStr(s.nombreBodega);
+      var loteErp = cleanErpStr(s.nroLote);
+      var vencErp = cleanErpStr(s.fechaVencimiento);
+      var regSan = cleanErpStr(meta.regSanitario);
+
+      var loteFinal = loteErp || regSan || 'S/L';
+      var tipoLote = loteErp ? 'LOTE' : (regSan ? 'REG_SANITARIO' : 'SIN_LOTE');
+      var vencFinal = vencErp || (!loteErp && meta.origenVencimiento === 'Caducidad Reg. Sanitario' ? meta.vencimiento : '') || '';
+      var origenVenc = vencErp ? 'Vencimiento de Lote' : (vencFinal ? 'Caducidad Reg. Sanitario' : 'Sin fecha');
+
+      var k = codItem + '|||' + codBodega + '|||' + (loteErp || loteFinal);
+      var vendido = salesByKey.hasOwnProperty(k) ? salesByKey[k] : 0;
+      var saldoActual = Number(s.saldoDisponible || 0);
+
+      return {
+        empresa: emp.nombre,
+        empresaCod: emp.cod,
+        codigo: codItem,
+        descripcion: cleanErpStr(s.descripcion) || meta.descripcion || '',
+        marca: meta.marca || 'GENERAL',
+        bodega: codBodega,
+        nombreBodega: nombreBodega,
+        bodegaCompleta: nombreBodega ? (codBodega + ' · ' + nombreBodega) : codBodega,
+        codBodega: codBodega,
+        lote: loteFinal,
+        tipoLote: tipoLote,
+        nroLoteReal: loteErp,
+        regSanitario: regSan,
+        vencimiento: vencFinal,
+        origenVencimiento: origenVenc,
+        fechaSaldo: cleanErpStr(s.fecha),
+        unidadMedida: meta.unidadMedida || '',
+        precioPvp: Number(meta.precioPvp || 0),
+        costo: Number(meta.costo || 0),
+        stock: +(saldoActual + vendido).toFixed(2),
+        vendido: +vendido.toFixed(2),
+        aumento: 0
+      };
+    });
+  }
+
+  function setErpBtnLoading(isLoading){
+    if (!btnConectarErp) return;
+    btnConectarErp.disabled = isLoading;
+    btnConectarErp.style.opacity = isLoading ? '0.7' : '1';
+    btnConectarErp.textContent = isLoading ? '⏳ Actualizando stock en vivo…' : '⚡ Actualizar stock en vivo';
+  }
+
+  function loadLocalLiveSaldos(baseRows){
+    return Promise.allSettled(
+      INSOFT_ENDPOINTS.map(function(emp){
+        return fetch(emp.url, { cache: 'no-store' })
+          .then(function(r){
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function(saldos){
+            if (!Array.isArray(saldos) || !saldos.length) throw new Error('Lista vacía');
+            return { cod: emp.cod, live: true, rows: mergeLiveSaldosWithCache(emp, saldos, baseRows) };
+          })
+          .catch(function(err){
+            console.warn('Fallback local para saldos ' + emp.cod + ':', err);
+            return {
+              cod: emp.cod,
+              live: false,
+              rows: baseRows.filter(function(r){ return r.empresaCod === emp.cod || r.empresa === emp.nombre; })
+            };
+          });
+      })
+    ).then(function(results){
+      var merged = [];
+      var liveCodes = [];
+      results.forEach(function(res){
+        if (res.status === 'fulfilled'){
+          merged = merged.concat(res.value.rows);
+          if (res.value.live) liveCodes.push(res.value.cod);
+        }
+      });
+      var label = liveCodes.length === INSOFT_ENDPOINTS.length
+        ? 'API Stock Insoft EN VIVO (047 & 079)'
+        : (liveCodes.length > 0
+          ? 'API Stock Insoft parcial (' + liveCodes.join(', ') + ' en vivo + respaldo)'
+          : 'Respaldo local datos_erp_combinados.json');
+      return { rows: merged, label: label };
+    });
+  }
+
+  function loadFromErpApi(forceLive){
+    var isLiveForce = forceLive === true;
+    var isRemoteHost = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol !== 'file:';
+
+    elEstado.textContent = isLiveForce
+      ? 'Consultando stock en bodega en vivo desde las APIs ERP (047 & 079)…'
+      : 'Cargando datos desde la API ERP combinada (047 & 079)…';
     elEstado.style.color = 'var(--primary)';
     elEstadoDetalle.textContent = '';
     elProxyNote.style.display = 'none';
+    setErpBtnLoading(true);
 
-    var dataEndpoint = (window.location.hostname !== 'localhost' && window.location.protocol !== 'file:')
-      ? '/api/datos?v=' + Date.now()
-      : 'datos_erp_combinados.json?v=' + Date.now();
-
-    fetch(dataEndpoint)
-      .then(function(res){
-        if (!res.ok) {
-          if (dataEndpoint.indexOf('/api/datos') !== -1) {
-            return fetch('datos_erp_combinados.json?v=' + Date.now()).then(function(r){ return r.json(); });
+    if (isRemoteHost){
+      var apiUrl = isLiveForce ? ('/api/datos?live=1&v=' + Date.now()) : '/api/datos';
+      fetch(apiUrl)
+        .then(function(res){
+          if (!res.ok) {
+            return fetch('datos_erp_combinados.json?v=' + Date.now()).then(function(r){
+              if (!r.ok) throw new Error('HTTP ' + res.status);
+              return r.json().then(function(d){ return { data: d, source: 'snapshot' }; });
+            });
           }
-          throw new Error('HTTP ' + res.status);
+          var src = res.headers.get('X-Data-Source') || (isLiveForce ? 'live' : 'api');
+          return res.json().then(function(d){ return { data: d, source: src }; });
+        })
+        .then(function(result){
+          ERP_ROWS_CACHE = result.data;
+          var label = result.source === 'live'
+            ? 'API ERP 047 & 079 EN VIVO · Insoft + Catalyst'
+            : (result.source === 'partial'
+              ? 'API ERP 047 & 079 (parcial en vivo + respaldo)'
+              : 'API ERP 047 & 079 · Respaldo sincronizado');
+          filtrarYAplicarErp(label);
+        })
+        .catch(function(err){
+          console.warn('No se pudo cargar /api/datos, usando respaldo de Google Sheets:', err);
+          if (SHEET_ID_JSONP) loadFromSheetJsonp(SHEET_ID_JSONP, SHEET_GID_JSONP);
+          else if (SHEET_CSV_URL) loadFromSheet(SHEET_CSV_URL);
+        })
+        .finally(function(){ setErpBtnLoading(false); });
+      return;
+    }
+
+    var basePromise = ERP_ROWS_CACHE.length
+      ? Promise.resolve(ERP_ROWS_CACHE)
+      : fetch('datos_erp_combinados.json?v=' + Date.now()).then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        });
+
+    basePromise
+      .then(function(baseData){
+        if (!isLiveForce){
+          ERP_ROWS_CACHE = baseData;
+          filtrarYAplicarErp('API ERP 047 & 079 · Respaldo local sincronizado');
+          return;
         }
-        return res.json();
-      })
-      .then(function(data){
-        ERP_ROWS_CACHE = data;
-        filtrarYAplicarErp();
+        return loadLocalLiveSaldos(baseData).then(function(res){
+          if (res.rows && res.rows.length){
+            ERP_ROWS_CACHE = res.rows;
+            filtrarYAplicarErp(res.label);
+          } else {
+            ERP_ROWS_CACHE = baseData;
+            filtrarYAplicarErp('Respaldo local datos_erp_combinados.json');
+          }
+        });
       })
       .catch(function(err){
         console.warn('No se pudo cargar datos_erp_combinados.json, usando respaldo de Google Sheets:', err);
-        if (SHEET_ID_JSONP){
-          loadFromSheetJsonp(SHEET_ID_JSONP, SHEET_GID_JSONP);
-        } else if (SHEET_CSV_URL){
-          loadFromSheet(SHEET_CSV_URL);
-        }
-      });
+        if (SHEET_ID_JSONP) loadFromSheetJsonp(SHEET_ID_JSONP, SHEET_GID_JSONP);
+        else if (SHEET_CSV_URL) loadFromSheet(SHEET_CSV_URL);
+      })
+      .finally(function(){ setErpBtnLoading(false); });
   }
 
-  if (btnConectarErp) btnConectarErp.addEventListener('click', loadFromErpApi);
-  if (chkSoloConVenc) chkSoloConVenc.addEventListener('change', filtrarYAplicarErp);
+  if (btnConectarErp) btnConectarErp.addEventListener('click', function(){ loadFromErpApi(true); });
+  if (chkSoloConVenc) chkSoloConVenc.addEventListener('change', function(){ filtrarYAplicarErp(); });
 
   btnConectar.addEventListener('click', function(){ loadFromSheet(elSheetUrl.value.trim()); });
   btnRefrescar.addEventListener('click', function(){ loadFromSheet(elSheetUrl.value.trim()); });
@@ -1129,7 +1304,7 @@
   chkAuto.addEventListener('change', function(){
     if (chkAuto.checked){
       autoTimer = setInterval(function(){
-        if (ERP_ROWS_CACHE.length) loadFromErpApi();
+        if (ERP_ROWS_CACHE.length) loadFromErpApi(true);
         else if (elSheetIdInput.value.trim()) loadFromSheetJsonp(elSheetIdInput.value.trim());
         else loadFromSheet(elSheetUrl.value.trim());
       }, 5 * 60 * 1000);
